@@ -5,11 +5,10 @@
 #          a master data output file. 
 #
 #
-# INPUT: simulation_results_raw.csv - contains information for every simulation
-#                                      run including means, probabilities of 
-#                                      exchangeability, pvalues, number of arms,
-#                                      outcome type, and all other relevant 
-#                                      information
+# INPUT: simulation_results_summary.csv - contains information for every simulation
+#                                      setting including means, number of arms,
+#                                      outcome type, and power for each test,
+#                                      and all other relevant information
 #
 # OUTPUT: lots of heatmaps, 
 #         histograms of probability of exchangeability and corresponding p-vals
@@ -41,7 +40,8 @@
 ####### SECTION 0: LOAD DEPENDENCIES & READ IN DATA #######
 ###########################################################
 
-alldat <- read.csv("simulation_results_raw.csv")
+# alldat <- read.csv("simulation_results_raw.csv")
+alldat <- read.csv("simulation_results_summary.csv")
 
 #R version 4.3.2 was used for this project.
 library(tidyverse) #version 2.0.0
@@ -68,13 +68,13 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
   }
   
   #subset data to OA/TA and Binary/Continuous setting
-  subdat <- alldat[((alldat$num_arms == num_arms) & (alldat$outcome_type == outcome_type)),]
+  subdat_summary <- alldat[((alldat$num_arms == num_arms) & (alldat$outcome_type == outcome_type)),]
   
-  subdat_summary <- subdat %>% 
-                      group_by(n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
-                      summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
-                                MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
-                                pval_power = sum(pval < p_cutoff)/nsim)
+  # subdat_summary <- subdat_summary %>% 
+  #                     group_by(n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+  #                     summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+  #                               MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
+  #                               pval_power = sum(pval < p_cutoff)/nsim)
   
   subdat_summary$totsampsize <- subdat_summary$n1 + subdat_summary$n2
   subdat_summary$var_c <- paste("Var = ", subdat_summary$sd1^2)
@@ -247,9 +247,9 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
 
 
 
-###########################################################
-################# SECTION 3: MAKE HEATMAP #################
-###########################################################
+############################################################
+################# SECTION 3: MAKE HEATMAPs #################
+############################################################
 
 
 heatmap_func(num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
