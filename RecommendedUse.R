@@ -109,6 +109,9 @@ allrecommendeduse$N_range <- ifelse(allrecommendeduse$min_N != allrecommendeduse
                                     paste(allrecommendeduse$min_N, "-", allrecommendeduse$max_N),
                                     allrecommendeduse$min_N)
 
+#confirmatory cases only have a minimum effect size requirement because the methods both converge to 1
+allrecommendeduse$effsize_range[allrecommendeduse$recommendeduse == "Confirmatory"] <- paste("\u2265", allrecommendeduse$min_effsize)
+
 allrecommendeduse <- allrecommendeduse %>% 
                       subset(select = c(-min_N, -max_N, -min_effsize, -max_effsize)) %>%
                       select(recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance, N_range, effsize_range)
