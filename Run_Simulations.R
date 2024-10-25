@@ -11,6 +11,13 @@
 #                                      outcome type, and all other relevant 
 #                                      information
 #
+#         simulation_results_summary.csv - summary of power for each test for 
+#                                          the main 0.2 MEM cutoff and 0.05 pval
+#
+#         simulation_results_summary_08cutoff.csv  - summary of power for each 
+#                                                    test for a 0.8 MEM cutoff 
+#                                                    and 0.05 pval
+#
 # SECTIONS: Section 1
 #              RunSim() - function to run the simulation in parallel 
 #                         given a number of simulations per setting and 
@@ -343,10 +350,41 @@ allresults <- rbind(OABin_11, OABin_12, OABin_13, OABin_14, OABin_15,
 
 
 write.csv(allresults, "simulation_results_raw.csv")
+#allresults <- read.csv("simulation_results_raw.csv")
+
+#create summary data set using the following cutoffs
+#PRIMARY CUTOFF = 0.2
+MEM_cutoff <- 0.2
+p_cutoff <- 0.05 
+nsim <- 10000
+allresults_summary <- allresults %>% 
+                      group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+                      summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+                                MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
+                                pval_power = sum(pval < p_cutoff)/nsim)
+
+allresults_summary$MEMcutoff <- MEM_cutoff
+allresults_summary$pvalcutoff <- p_cutoff
+
+write.csv(allresults_summary, "simulation_results_summary.csv")
+
+#ALTERNATE CUTOFF = 0.8
+MEM_cutoff <- 0.8
+p_cutoff <- 0.05 
+nsim <- 10000
+allresults_summary_08 <- allresults %>% 
+  group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+  summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+            MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
+            pval_power = sum(pval < p_cutoff)/nsim)
+
+allresults_summary_08$MEMcutoff <- MEM_cutoff
+allresults_summary_08$pvalcutoff <- p_cutoff
+
+write.csv(allresults_summary_08, "simulation_results_summary_08cutoff.csv")
 
 
-
-
+###########################FINISH THE RECOMMENDED USE CASES CODE LATER###########################
 
 ##########################################################
 ########## SECTION 4: RUN SIMULATION (n1 != n2) ########## 
