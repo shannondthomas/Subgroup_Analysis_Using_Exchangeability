@@ -9,6 +9,9 @@
 #                                      outcome type, and power for each test,
 #                                      and all other relevant information
 #
+#         simulation_results_summary_08cutoff.csv  - summary of power for each 
+#                                                    test for a 0.8 MEM cutoff 
+#                                                    and 0.05 pval
 # OUTPUT: Recommended Use Case Tables
 #
 #
@@ -156,8 +159,8 @@ ft3 <- ft2 %>% theme_box() %>%
       merge_at(i = 33:35, j = 5) %>%
         merge_at(i = 34:35, j = 6)
 
-ft3 
 
+ft3 %>% save_as_docx( path = "RecommendedUse_Master.docx")
 
 
 
