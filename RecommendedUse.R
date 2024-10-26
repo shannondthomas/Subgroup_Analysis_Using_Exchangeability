@@ -30,8 +30,10 @@ library(flextable) #version 0.9.6
 #read in summary data
 allresults_summary <- read.csv("simulation_results_summary.csv")
 allresults_summary_08 <- read.csv("simulation_results_summary_08cutoff.csv")
-
-allresults_summary <- rbind(allresults_summary, allresults_summary_08) %>% subset(select = c(-X))
+allresults_unequaln_summary <- read.csv("simulation_results_unequaln_summary.csv")
+allresults_unequaln_summary_08 <- read.csv("simulation_results_unequaln_summary_08cutoff.csv")
+allresults_summary <- rbind(allresults_summary, allresults_summary_08,
+                            allresults_unequaln_summary, allresults_unequaln_summary_08) %>% subset(select = c(-X))
 
 
 #rearrange data to define confirmatory and exploratory use case settings
@@ -75,14 +77,16 @@ allresults_summary_wide$N <- allresults_summary_wide$n1 + allresults_summary_wid
 allresults_summary_wide$effect_size <-ifelse(allresults_summary_wide$num_arms == 1, allresults_summary_wide$mean2 - allresults_summary_wide$mean1,
                                              allresults_summary_wide$trteff2 - allresults_summary_wide$trteff1)
 
+allresults_summary_wide$n2_mult <- allresults_summary_wide$n2/allresults_summary_wide$N
+
 recommendeduse_summary <- function(name, memtype, recommendeduse){
   sum1 <- allresults_summary_wide[allresults_summary_wide[[name]] == 1,] %>% 
-            group_by(MEMcutoff, num_arms, outcome_type, Variance, N) %>%
+            group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, N) %>%
             summarize(min_effsize = min(effect_size),
                       max_effsize = max(effect_size))
   
   sum2 <- sum1 %>%
-            group_by(MEMcutoff, num_arms, outcome_type, Variance, min_effsize, max_effsize) %>%
+            group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, min_effsize, max_effsize) %>%
             summarize(min_N = min(N),
                       max_N = max(N))
   
@@ -100,7 +104,7 @@ MEM_exploratory <- recommendeduse_summary("MEMexploratory", "MEM", "Exploratory"
 MEMr_exploratory <- recommendeduse_summary("MEMrexploratory", "MEMr", "Exploratory")
 
 allrecommendeduse <- rbind(MEM_confirmatory, MEMr_confirmatory, MEM_exploratory, MEMr_exploratory) %>%
-                        arrange(recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance) 
+                        arrange(n2_mult, recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance) 
 
 allrecommendeduse$effsize_range <- ifelse(allrecommendeduse$min_effsize != allrecommendeduse$max_effsize,
                                             paste(allrecommendeduse$min_effsize, "-", allrecommendeduse$max_effsize),
@@ -114,53 +118,54 @@ allrecommendeduse$effsize_range[allrecommendeduse$recommendeduse == "Confirmator
 
 allrecommendeduse <- allrecommendeduse %>% 
                       subset(select = c(-min_N, -max_N, -min_effsize, -max_effsize)) %>%
-                      select(recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance, N_range, effsize_range)
+                      select(n2_mult, recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance, N_range, effsize_range) %>%
+                      arrange(desc(n2_mult))
 
 
-colnames(allrecommendeduse) <- c("Recommended Use","MEM \nCutoff", "Number \nof Arms", "Outcome \nType", 
+colnames(allrecommendeduse) <- c("Sample \nSize Dist","Recommended Use","MEM \nCutoff", "Number \nof Arms", "Outcome \nType", 
                                  "Model", "Variance", "Sample Size", "Effect Size")
 
 allrecommendeduse$Variance[is.na(allrecommendeduse$Variance)] <- "--"
 
 ft1 <- flextable(allrecommendeduse)
 ft1
-ft2 <- merge_v(ft1, j = c("Recommended Use","MEM \nCutoff"))
+ft2 <- merge_v(ft1, j = c("Sample \nSize Dist","Recommended Use","MEM \nCutoff"))
 ft2 %>% theme_box()
 
 ft3 <- ft2 %>% theme_box() %>%
-  merge_at(i = 1:10, j = 3) %>% 
-    merge_at(i = 1:4, j = 4) %>% 
-      merge_at(i = 1:2, j = 5) %>% 
-        merge_at(i = 1:2, j = 6) %>% 
-      merge_at(i = 3:4, j = 5) %>% 
-        merge_at(i = 3:4, j = 6) %>% 
-    merge_at(i = 5:10, j = 4) %>%
-      merge_at(i = 5:6, j = 5) %>%
-      merge_at(i = 7:10, j = 5) %>%
-        merge_at(i = 8:9, j = 6) %>%
-  merge_at(i = 11:16, j = 3) %>% 
-    merge_at(i = 12:16, j = 4) %>% 
-      merge_at(i = 12:16, j = 5) %>%
-        merge_at(i = 12:13, j = 6) %>%
-        merge_at(i = 14:16, j = 6) %>%
-  merge_at(i = 17:20, j = 3) %>% 
-    merge_at(i = 18:20, j = 4) %>%
+  merge_at(i = 1:10, j = 4) %>% 
+    merge_at(i = 1:4, j = 5) %>% 
+      merge_at(i = 1:2, j = 6) %>% 
+        merge_at(i = 1:2, j = 7) %>% 
+      merge_at(i = 3:4, j = 6) %>% 
+        merge_at(i = 3:4, j = 7) %>% 
+    merge_at(i = 5:10, j = 5) %>%
+      merge_at(i = 5:6, j = 6) %>%
+      merge_at(i = 7:10, j = 6) %>%
+        merge_at(i = 7:10, j = 7) %>%
+  merge_at(i = 11:16, j = 4) %>% 
+    merge_at(i = 12:16, j = 5) %>% 
+      merge_at(i = 12:16, j = 6) %>%
+        merge_at(i = 12:13, j = 7) %>%
+        merge_at(i = 14:16, j = 7) %>%
+  merge_at(i = 17:20, j = 4) %>% 
     merge_at(i = 18:20, j = 5) %>%
-  merge_at(i = 21:24, j = 3) %>% 
-    merge_at(i = 22:24, j = 4) %>%
-      merge_at(i = 22:24, j = 5) %>%
-  merge_at(i = 26:30, j = 3) %>% 
-    merge_at(i = 26:27, j = 4) %>%
-    merge_at(i = 28:30, j = 4) %>%
-      merge_at(i = 29:30, j = 5) %>%
-        merge_at(i = 29:30, j = 6) %>%
-  merge_at(i = 31:35, j = 3) %>% 
-    merge_at(i = 31:32, j = 4) %>%
-      merge_at(i = 31:32, j = 5) %>%
-        merge_at(i = 31:32, j = 6) %>%
-    merge_at(i = 33:35, j = 4) %>%
-      merge_at(i = 33:35, j = 5) %>%
-        merge_at(i = 34:35, j = 6)
+      merge_at(i = 18:20, j = 6) %>%
+  merge_at(i = 21:24, j = 4) %>% 
+    merge_at(i = 22:24, j = 5) %>%
+      merge_at(i = 22:24, j = 6) %>%
+  merge_at(i = 26:30, j = 4) %>% 
+    merge_at(i = 26:27, j = 5) %>%
+    merge_at(i = 28:30, j = 5) %>%
+      merge_at(i = 29:30, j = 6) %>%
+        merge_at(i = 29:30, j = 7) %>%
+  merge_at(i = 31:35, j = 4) %>% 
+    merge_at(i = 31:32, j = 5) %>%
+      merge_at(i = 31:32, j = 6) %>%
+        merge_at(i = 31:32, j = 7) %>%
+    merge_at(i = 33:35, j = 5) %>%
+      merge_at(i = 33:35, j = 6) %>%
+        merge_at(i = 34:35, j = 7)
 
 
 ft3 %>% save_as_docx( path = "RecommendedUse_Master.docx")

@@ -9,21 +9,22 @@
 #                                      setting including means, number of arms,
 #                                      outcome type, and power for each test,
 #                                      and all other relevant information
+#        simulation_unequaln_results_summary.csv - same as above for unequal n
 #
 # OUTPUT: lots of heatmaps, 
 #         histograms of probability of exchangeability and corresponding p-vals
 #
 #
-# FUNCTIONS: Section 1
+# SECTIONS: Section 1
 #              heatmap_func() - function to make heatmaps and save to appropriate
 #                               figure folder
-#            Section 2
+#           Section 2
 #              run heatmap function for all scenarios
 #              2.1 One-Arm Binary Outcome
 #              2.2 One-Arm Continuous Outcome
 #              2.3 Two-Arm Binary Outcome
 #              2.4 Two-Arm Continuous Outcome
-#            Section 3
+#           Section 3
 #              create histograms 
 #
 # AUTHOR: Shannon Thomas
@@ -38,6 +39,7 @@
 
 # alldat <- read.csv("simulation_results_raw.csv")
 alldat <- read.csv("simulation_results_summary.csv")
+alldat_unequaln <- read.csv("simulation_results_unequaln_summary.csv")
 
 #R version 4.3.2 was used for this project.
 library(tidyverse) #version 2.0.0
@@ -51,7 +53,7 @@ library(grid)      #base package
 
 nsim <- 10000
 
-heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff) {
+heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff, unequal_n = FALSE) {
   
   
   if(outcome_type == "binary"){
@@ -64,7 +66,7 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
   }
   
   #subset data to OA/TA and Binary/Continuous setting
-  subdat_summary <- alldat[((alldat$num_arms == num_arms) & (alldat$outcome_type == outcome_type)),]
+  subdat_summary <- dat[((dat$num_arms == num_arms) & (dat$outcome_type == outcome_type)),]
   
   # subdat_summary <- subdat_summary %>% 
   #                     group_by(n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
@@ -74,7 +76,15 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
   
   subdat_summary$totsampsize <- subdat_summary$n1 + subdat_summary$n2
   subdat_summary$var_c <- paste("Var = ", subdat_summary$sd1^2)
-
+  
+  #define n2mult
+  if(unequal_n != FALSE){
+    subdat_summary$n2_prop <- paste("n2 =",round(subdat_summary$n2/(subdat_summary$totsampsize),2),"N")
+    foldername <- "Figures/UnequalSamp/"
+  }
+  else{
+    foldername <- "Figures/"
+  }
   
   #define effect size difference for plots
   if(num_arms == 1){
@@ -86,15 +96,17 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
     subdat_summary$efdiff <- subdat_summary$trteff2 - subdat_summary$trteff1
     num_arm_c <- "Two"
   }
-  
-  
+
+    
   
   
   #First plot is the difference plot for MEMr vs standard test.
   #This plot has two pieces to allow for opposite coloring of power and t1e
     p1 <- ggplot(subdat_summary[subdat_summary$efdiff != 0,], aes(efdiff, totsampsize, fill=round(MEMr_power - pval_power,7))) + 
       geom_tile() + 
-      geom_text(aes(label=round(MEMr_power - pval_power,7)),size = 5) + {if(outcome_type == "continuous")facet_grid(var_c~.)} +
+      geom_text(aes(label=round(MEMr_power - pval_power,7)),size = 5) + 
+      {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+      {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
       xlab("Difference in Effect Size") +
       ylab("") +
       labs(#title= "Power",
@@ -113,7 +125,9 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
     
     p2 <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize, fill=round(MEMr_power - pval_power,7))) + 
       geom_tile() + 
-      geom_text(aes(label=round(MEMr_power - pval_power,7)),size = 5) + {if(outcome_type == "continuous")facet_grid(var_c~.)} + 
+      geom_text(aes(label=round(MEMr_power - pval_power,7)),size = 5) + 
+      {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+      {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
       labs(#title = "Type I Error",
         fill = "Type I \nError") +
       xlab("") +
@@ -130,7 +144,7 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
       {if(outcome_type == "continuous")scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
       {if(outcome_type == "binary")scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))}
     
-    jpeg(paste("Figures/DiffMEMr_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,".jpg",sep = ""), 
+    jpeg(paste(foldername,"DiffMEMr_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,".jpg",sep = ""), 
          height = 0.25*ht, width = 0.25*width)
       grid.arrange(p2,p1,nrow = 1, widths = c(1,4), 
                    top = textGrob(paste(num_arm_c, "Arm", outcome_type_c,
@@ -144,7 +158,9 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
     if(num_arms == 1){
       p1_MEM <- ggplot(subdat_summary[subdat_summary$efdiff != 0,], aes(efdiff, totsampsize, fill=round(MEM_power - pval_power,7))) + 
         geom_tile() + 
-        geom_text(aes(label=round(MEM_power - pval_power,7)),size = 5) + {if(outcome_type == "continuous")facet_grid(var_c~.)} +
+        geom_text(aes(label=round(MEM_power - pval_power,7)),size = 5) + 
+        {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+        {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
         xlab("Difference in Effect Size") +
         ylab("") +
         labs(#title= "Power",
@@ -163,7 +179,9 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
       
       p2_MEM <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize, fill=round(MEM_power - pval_power,7))) + 
         geom_tile() + 
-        geom_text(aes(label=round(MEM_power - pval_power,7)),size = 5) + {if(outcome_type == "continuous")facet_grid(var_c~.)} + 
+        geom_text(aes(label=round(MEM_power - pval_power,7)),size = 5) + 
+        {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+        {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
         labs(#title = "Type I Error",
           fill = "Type I \nError") +
         xlab("") +
@@ -180,7 +198,7 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
         {if(outcome_type == "continuous")scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
         {if(outcome_type == "binary")scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))}
       
-      jpeg(paste("Figures/DiffMEM_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,".jpg",sep = ""), 
+      jpeg(paste(foldername, "DiffMEM_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,".jpg",sep = ""), 
            height = 0.25*ht, width = 0.25*width)
         grid.arrange(p2_MEM,p1_MEM,nrow = 1, widths = c(1,4), 
                    top = textGrob(paste(num_arm_c, "Arm", outcome_type_c,
@@ -198,7 +216,9 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
     
     if(num_arms == 1){
             ggplot(subdat_summary, aes(efdiff, totsampsize, fill=MEM_power)) + 
-              geom_tile() + geom_text(aes(label=MEM_power),size = 7) + {if(outcome_type == "continuous")facet_grid(var_c~.)} +
+              geom_tile() + geom_text(aes(label=MEM_power),size = 7) + 
+              {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+              {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
               labs(title = paste("Heatmap of MEM Power for Varying Sample Sizes and Differences \nin Effect Sizes in", 
                                  num_arm_c, "Arm", outcome_type_c, "Outcome Scenario"),
                    fill = "Type I Error/\nPower") +
@@ -206,13 +226,15 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
               ylab("Total Sample Size (N)") +
               theme(text=element_text(size=12)) +
               scale_fill_gradientn(limits = c(0,1), colors = c("white","dodgerblue3"), breaks = c(0,1))
-      ggsave(paste("Figures/PowerMEM_",num_arm_c,"Arm",outcome_type_c,"_Cutoff", MEM_cutoff,".jpg",sep = ""), 
+      ggsave(paste(foldername,"PowerMEM_",num_arm_c,"Arm",outcome_type_c,"_Cutoff", MEM_cutoff,".jpg",sep = ""), 
              height = ht, width = width, units = "px")
     }
     
     #standard test
           ggplot(subdat_summary, aes(efdiff, totsampsize, fill=pval_power)) + 
-            geom_tile() + geom_text(aes(label=pval_power),size = 7) + {if(outcome_type == "continuous")facet_grid(var_c~.)} +
+            geom_tile() + geom_text(aes(label=pval_power),size = 7) + 
+            {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+            {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
             labs(title = paste("Heatmap of", standard_test_name,"Power for Varying Sample Sizes and Differences \nin Effect Sizes in", 
                                num_arm_c, "Arm", outcome_type_c, "Outcome Scenario"),
                  fill = "Type I Error/\nPower") +
@@ -220,12 +242,14 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
             ylab("Total Sample Size (N)") +
             theme(text=element_text(size=12)) +
             scale_fill_gradientn(limits = c(0,1), colors = c("white","dodgerblue3"), breaks = c(0,1))
-    ggsave(paste("Figures/Power",standard_test_name,"_",num_arm_c,"Arm",outcome_type_c,".jpg",sep = ""), 
+    ggsave(paste(foldername,"Power",standard_test_name,"_",num_arm_c,"Arm",outcome_type_c,".jpg",sep = ""), 
            height = ht, width = width, units = "px")
     
     #MEMr
           ggplot(subdat_summary, aes(efdiff, totsampsize, fill=MEMr_power)) + 
-            geom_tile() + geom_text(aes(label=MEMr_power),size = 7) + {if(outcome_type == "continuous")facet_grid(var_c~.)} +
+            geom_tile() + geom_text(aes(label=MEMr_power),size = 7) + 
+            {if((outcome_type == "continuous") & (unequal_n == FALSE))facet_grid(var_c~.)} +
+            {if(unequal_n != FALSE)facet_grid(n2_prop~.)} +
             labs(title = paste("Heatmap of MEMr Power for Varying Sample Sizes and Differences \nin Effect Sizes in", 
                                num_arm_c, "Arm", outcome_type_c, "Outcome Scenario"),
                  fill = "Type I Error/\nPower") +
@@ -233,7 +257,7 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
             ylab("Total Sample Size (N)") +
             theme(text=element_text(size=12)) +
             scale_fill_gradientn(limits = c(0,1), colors = c("white","dodgerblue3"), breaks = c(0,1))
-    ggsave(paste("Figures/PowerMEMr_",num_arm_c,"Arm",outcome_type_c,"_Cutoff", MEM_cutoff,".jpg",sep = ""), 
+    ggsave(paste(foldername, "PowerMEMr_",num_arm_c,"Arm",outcome_type_c,"_Cutoff", MEM_cutoff,".jpg",sep = ""), 
            height = ht, width = width, units = "px")
 }
 
@@ -248,14 +272,20 @@ heatmap_func <- function(num_arms, outcome_type, ht, width, MEM_cutoff, p_cutoff
 ############################################################
 
 
-heatmap_func(num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
-heatmap_func(num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
-heatmap_func(num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
-heatmap_func(num_arms = 2, outcome_type = "continuous", ht = 3000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
+heatmap_func(alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
+heatmap_func(alldat, num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
+heatmap_func(alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
+heatmap_func(alldat, num_arms = 2, outcome_type = "continuous", ht = 3000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
 
 
-
-
+heatmap_func(alldat_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+             unequal_n = TRUE)
+heatmap_func(alldat_unequaln, num_arms = 1, outcome_type = "continuous", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+             unequal_n = TRUE)
+heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+             unequal_n = TRUE)
+heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+             unequal_n = TRUE)
 
 
 

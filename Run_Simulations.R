@@ -17,6 +17,12 @@
 #         simulation_results_summary_08cutoff.csv  - summary of power for each 
 #                                                    test for a 0.8 MEM cutoff 
 #                                                    and 0.05 pval
+#         simulation_results_unequaln_raw.csv - same as above for unequal n
+#
+#         simulation_results_unequaln_summary.csv - same as above for unequal n
+#
+#         simulation_results_unequaln_summary_08cutoff.csv  - same as above for 
+#                                                             unequal n
 #
 # SECTIONS: Section 1
 #              RunSim() - function to run the simulation in parallel 
@@ -35,7 +41,9 @@
 #              aggregate data
 #
 #           Section 4
-#              repeat sections 2 and 3 for unequal sample sizes in groups
+#              repeat section 2 for unequal sample sizes in groups
+#           Section 5
+#              repeat section 3 for unequal sample sizes in groups
 #
 # NOTES: Sections 1-3 took about 6.5 hours to run on my DELL laptop - 
 #           Processor - Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, 2592 Mhz, 
@@ -138,7 +146,7 @@ RunSim <- function(nsim = 10000, pars, num_arms, outcome_type, marginal = "BIC")
 
 ##########################################################
 ############### SECTION 2:  RUN SIMULATION ############### 
-#########################################################
+##########################################################
 
 
 ### SECTION 2.1: Function to create parameter list of lists 
@@ -384,7 +392,7 @@ allresults_summary_08$pvalcutoff <- p_cutoff
 write.csv(allresults_summary_08, "simulation_results_summary_08cutoff.csv")
 
 
-###########################FINISH THE RECOMMENDED USE CASES CODE LATER###########################
+
 
 ##########################################################
 ########## SECTION 4: RUN SIMULATION (n1 != n2) ########## 
@@ -413,22 +421,231 @@ parfunc_unequaln <- function(means, sds = c(NA,NA), trt_effect = c(NA,NA), n2mul
 }
 
 
-#########################FINISH THIS LATER
 
 ### SECTION 2.2: One-Arm Binary Outcome
+
+#scenario 1: equal group probabilities (0.1 and 0.1) and unequal sample sizes (n2 = 0.1*N)
+system.time(OABin_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), n2mult = 0.1),
+                               num_arms = 1, outcome_type = "binary"))
+
+#scenario 2: unequal group probabilities (0.1 and 0.2) and unequal sample sizes (n2 = 0.1*N)
+system.time(OABin_12_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.2), n2mult = 0.1),
+                               num_arms = 1, outcome_type = "binary"))
+
+#scenario 3: unequal group probabilities (0.1 and 0.3) and unequal sample sizes (n2 = 0.1*N)
+system.time(OABin_13_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.3), n2mult = 0.1),
+                               num_arms = 1, outcome_type = "binary"))
+
+#scenario 4: unequal group probabilities (0.1 and 0.4) and unequal sample sizes (n2 = 0.1*N)
+system.time(OABin_14_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.4), n2mult = 0.1),
+                               num_arms = 1, outcome_type = "binary"))
+
+#scenario 5: unequal group probabilities (0.1 and 0.5) and unequal sample sizes (n2 = 0.1*N)
+system.time(OABin_15_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.5), n2mult = 0.1),
+                               num_arms = 1, outcome_type = "binary"))
+
+#scenario 6: equal group probabilities (0.1 and 0.1) and unequal sample sizes (n2 = 0.25*N)
+system.time(OABin_11_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), n2mult = 0.25),
+                                    num_arms = 1, outcome_type = "binary"))
+
+#scenario 7: unequal group probabilities (0.1 and 0.2) and unequal sample sizes (n2 = 0.25*N)
+system.time(OABin_12_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.2), n2mult = 0.25),
+                                    num_arms = 1, outcome_type = "binary"))
+
+#scenario 8: unequal group probabilities (0.1 and 0.3) and unequal sample sizes (n2 = 0.25*N)
+system.time(OABin_13_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.3), n2mult = 0.25),
+                                    num_arms = 1, outcome_type = "binary"))
+
+#scenario 9: unequal group probabilities (0.1 and 0.4) and unequal sample sizes (n2 = 0.25*N)
+system.time(OABin_14_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.4), n2mult = 0.25),
+                                    num_arms = 1, outcome_type = "binary"))
+
+#scenario 10: unequal group probabilities (0.1 and 0.5) and unequal sample sizes (n2 = 0.25*N)
+system.time(OABin_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.5), n2mult = 0.25),
+                                    num_arms = 1, outcome_type = "binary"))
+
+
+
 ### SECTION 2.2: One-Arm Continuous Outcome
+
+#scenario 1: equal group means (1 and 1) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(OACont_var10_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 1, outcome_type = "continuous"))
+
+#scenario 2: unequal group means (1 and 2) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(OACont_var10_12_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,2), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 1, outcome_type = "continuous"))
+
+#scenario 3: unequal group means (1 and 3) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(OACont_var10_13_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,3), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 1, outcome_type = "continuous"))
+
+#scenario 4: unequal group means (1 and 4) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(OACont_var10_14_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,4), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 1, outcome_type = "continuous"))
+
+#scenario 5: unequal group means (1 and 5) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(OACont_var10_15_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,5), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 1, outcome_type = "continuous"))
+
+#scenario 6: equal group means (1 and 1) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(OACont_var10_11_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,1), c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 1, outcome_type = "continuous"))
+
+#scenario 7: unequal group means (1 and 2) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(OACont_var10_12_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,2), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 1, outcome_type = "continuous"))
+
+#scenario 8: unequal group means (1 and 3) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(OACont_var10_13_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,3), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 1, outcome_type = "continuous"))
+
+#scenario 9: unequal group means (1 and 4) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(OACont_var10_14_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,4), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 1, outcome_type = "continuous"))
+
+#scenario 10: unequal group means (1 and 5) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(OACont_var10_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,5), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 1, outcome_type = "continuous"))
+
+
+
 ### SECTION 2.2: Two-Arm Binary Outcome
+
+#scenario 1: equal group probabilities (0.1 and 0.1) and treatment effects (0.1 and 0.1) and unequal sample sizes (n2 = 0.1*N)
+system.time(TABin_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.1), n2mult = 0.1),
+                               num_arms = 2, outcome_type = "binary"))
+
+#scenario 2: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.2) and unequal sample sizes (n2 = 0.1*N)
+system.time(TABin_12_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.2), n2mult = 0.1),
+                               num_arms = 2, outcome_type = "binary"))
+
+#scenario 3: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.3) and unequal sample sizes (n2 = 0.1*N)
+system.time(TABin_13_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.3), n2mult = 0.1),
+                               num_arms = 2, outcome_type = "binary"))
+
+#scenario 4: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.4) and unequal sample sizes (n2 = 0.1*N)
+system.time(TABin_14_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.4), n2mult = 0.1),
+                               num_arms = 2, outcome_type = "binary"))
+
+#scenario 5: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.5) and unequal sample sizes (n2 = 0.1*N)
+system.time(TABin_15_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.5), n2mult = 0.1),
+                               num_arms = 2, outcome_type = "binary"))
+
+#scenario 6: equal group probabilities (0.1 and 0.1) and treatment effects (0.1 and 0.1) and unequal sample sizes (n2 = 0.25*N)
+system.time(TABin_11_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.1), n2mult = 0.25),
+                                    num_arms = 2, outcome_type = "binary"))
+
+#scenario 7: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.2) and unequal sample sizes (n2 = 0.25*N)
+system.time(TABin_12_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.2), n2mult = 0.25),
+                                    num_arms = 2, outcome_type = "binary"))
+
+#scenario 8: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.3) and unequal sample sizes (n2 = 0.25*N)
+system.time(TABin_13_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.3), n2mult = 0.25),
+                                    num_arms = 2, outcome_type = "binary"))
+
+#scenario 9: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.4) and unequal sample sizes (n2 = 0.25*N)
+system.time(TABin_14_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.4), n2mult = 0.25),
+                                    num_arms = 2, outcome_type = "binary"))
+
+#scenario 10: equal group probabilities (0.1 and 0.1) and unequal treatment effects (0.1 and 0.5) and unequal sample sizes (n2 = 0.25*N)
+system.time(TABin_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.5), n2mult = 0.25),
+                                    num_arms = 2, outcome_type = "binary"))
+
+
 ### SECTION 2.2: Twp-Arm Continuous Outcome
 
+#scenario 1: equal group means (1 and 1) and treatment effects (1 and 1) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(TACont_var10_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,1), c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 2, outcome_type = "continuous"))
+
+#scenario 2: unequal group means (1 and 1) and unequal treatment effects (1 and 2) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N) 
+system.time(TACont_var10_12_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,2), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 2, outcome_type = "continuous"))
+
+#scenario 3: unequal group means (1 and 1) and unequal treatment effects (1 and 3) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(TACont_var10_13_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,3), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 2, outcome_type = "continuous"))
+
+#scenario 4: unequal group means (1 and 1) and unequal treatment effects (1 and 4) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(TACont_var10_14_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,4), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 2, outcome_type = "continuous"))
+
+#scenario 5: unequal group means (1 and 1) and unequal treatment effects (1 and 5) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
+system.time(TACont_var10_15_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,5), sds = c(sqrt(10),sqrt(10)), n2mult = 0.1),
+                                      num_arms = 2, outcome_type = "continuous"))
+
+#scenario 6: equal group means (1 and 1) and treatment effects (1 and 1) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(TACont_var10_11_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,1), c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 2, outcome_type = "continuous"))
+
+#scenario 7: unequal group means (1 and 1) and unequal treatment effects (1 and 2) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N) 
+system.time(TACont_var10_12_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,2), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 2, outcome_type = "continuous"))
+
+#scenario 8: unequal group means (1 and 1) and unequal treatment effects (1 and 3) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(TACont_var10_13_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,3), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 2, outcome_type = "continuous"))
+
+#scenario 9: unequal group means (1 and 1) and unequal treatment effects (1 and 4) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(TACont_var10_14_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,4), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 2, outcome_type = "continuous"))
+
+#scenario 10: unequal group means (1 and 1) and unequal treatment effects (1 and 5) and sd = sqrt(10) and unequal sample sizes (n2 = 0.25*N)
+system.time(TACont_var10_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,5), sds = c(sqrt(10),sqrt(10)), n2mult = 0.25),
+                                           num_arms = 2, outcome_type = "continuous"))
 
 
 
 
 
+##########################################################
+########## SECTION 5:  AGGREGATE UNEQUAL N DATA ########## 
+##########################################################
+
+allresults_unequaln <- rbind(OABin_11_n201, OABin_12_n201, OABin_13_n201, OABin_14_n201, OABin_15_n201,
+                    OABin_11_n2025, OABin_12_n2025, OABin_13_n2025, OABin_14_n2025, OABin_15_n2025,
+                    OACont_var10_11_n201, OACont_var10_12_n201, OACont_var10_13_n201, OACont_var10_14_n201, OACont_var10_15_n201,
+                    OACont_var10_11_n2025, OACont_var10_12_n2025, OACont_var10_13_n2025, OACont_var10_14_n2025, OACont_var10_15_n2025,
+                    TABin_11_n201, TABin_12_n201, TABin_13_n201, TABin_14_n201, TABin_15_n201,
+                    TABin_11_n2025, TABin_12_n2025, TABin_13_n2025, TABin_14_n2025, TABin_15_n2025,
+                    TACont_var10_11_n201, TACont_var10_12_n201, TACont_var10_13_n201, TACont_var10_14_n201, TACont_var10_15_n201,
+                    TACont_var10_11_n2025, TACont_var10_12_n2025, TACont_var10_13_n2025, TACont_var10_14_n2025, TACont_var10_15_n2025)
 
 
+write.csv(allresults_unequaln, "simulation_results_unequaln_raw.csv")
+#allresults_unequaln <- read.csv("simulation_results_unequaln_raw.csv")
 
+#create summary data set using the following cutoffs
+#PRIMARY CUTOFF = 0.2
+MEM_cutoff <- 0.2
+p_cutoff <- 0.05 
+nsim <- 10000
+allresults_unequaln_summary <- allresults_unequaln %>% 
+  group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+  summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+            MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
+            pval_power = sum(pval < p_cutoff)/nsim)
 
+allresults_unequaln_summary$MEMcutoff <- MEM_cutoff
+allresults_unequaln_summary$pvalcutoff <- p_cutoff
+
+write.csv(allresults_unequaln_summary, "simulation_results_unequaln_summary.csv")
+
+#ALTERNATE CUTOFF = 0.8
+MEM_cutoff <- 0.8
+p_cutoff <- 0.05 
+nsim <- 10000
+allresults_unequaln_summary_08 <- allresults_unequaln %>% 
+  group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+  summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+            MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
+            pval_power = sum(pval < p_cutoff)/nsim)
+
+allresults_unequaln_summary_08$MEMcutoff <- MEM_cutoff
+allresults_unequaln_summary_08$pvalcutoff <- p_cutoff
+
+write.csv(allresults_unequaln_summary_08, "simulation_results_unequaln_summary_08cutoff.csv")
 
 
 
