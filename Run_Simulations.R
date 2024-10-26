@@ -45,7 +45,7 @@
 #           Section 5
 #              repeat section 3 for unequal sample sizes in groups
 #
-# NOTES: Sections 1-3 took about 6.5 hours to run on my DELL laptop - 
+# NOTES: Sections 1-5 took 16 hours to run on my DELL laptop - 
 #           Processor - Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, 2592 Mhz, 
 #                       6 Core(s), 12 Logical Processor(s)
 #           Installed RAM - 16.0 GB (15.8 GB usable)
