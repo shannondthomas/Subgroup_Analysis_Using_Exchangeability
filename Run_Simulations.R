@@ -1,8 +1,8 @@
 #################################################################################
 # TITLE: Run_Simulations.R
 #
-# PURPOSE: Run simulations in parallel using the snowfall package and create
-#          a master data output file. 
+# PURPOSE: Run simulations in parallel using RunSim() func from 
+#          Simulation_Function.R and create a master data output file. 
 #
 #
 # OUTPUT: simulation_results_raw.csv - contains information for every simulation
@@ -25,27 +25,21 @@
 #                                                             unequal n
 #
 # SECTIONS: Section 1
-#              RunSim() - function to run the simulation in parallel 
-#                         given a number of simulations per setting and 
-#                         a list with parameter settings containing 
-#                         n, means, sds (if continuous),& trt_effect (if two-arm),
-#                         num_arms, outcome_type, and marginal
-#           Section 2
 #              run simulations with various parameter settings 
-#              2.1 parfunc() - function to create parameter list of lists
-#              2.2 One-Arm Binary Outcome
-#              2.3 One-Arm Continuous Outcome
-#              2.4 Two-Arm Binary Outcome
-#              2.5 Two-Arm Continuous Outcome
-#           Section 3
+#              1.1 parfunc() - function to create parameter list of lists
+#              1.2 One-Arm Binary Outcome
+#              1.3 One-Arm Continuous Outcome
+#              1.4 Two-Arm Binary Outcome
+#              1.5 Two-Arm Continuous Outcome
+#           Section 2
 #              aggregate data
 #
+#           Section 3
+#              repeat section 1 for unequal sample sizes in groups
 #           Section 4
 #              repeat section 2 for unequal sample sizes in groups
-#           Section 5
-#              repeat section 3 for unequal sample sizes in groups
 #
-# NOTES: Sections 1-5 took 16 hours to run on my DELL laptop - 
+# NOTES: Sections 1-4 took 17 hours to run on my DELL laptop - 
 #           Processor - Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, 2592 Mhz, 
 #                       6 Core(s), 12 Logical Processor(s)
 #           Installed RAM - 16.0 GB (15.8 GB usable)
@@ -60,96 +54,15 @@
 #### SECTION 0: LOAD DEPENDENCIES & SOURCE MODEL FUNC ####
 ##########################################################
 
-source("Test_Functions.R")
-#R version 4.3.2 was used for this project.
-library(tidyverse) #version 2.0.0
-library(snowfall)  #version 1.84-6.3
-
-
+source("Simulation_Function.R")
 
 
 ##########################################################
-############# SECTION 1: SIMULATION FUNCTION ############# 
-##########################################################
-
-RunSim <- function(nsim = 10000, pars, num_arms, outcome_type, marginal = "BIC") {
-  
-  #summary matrix: first weight 1 (non-exchangeable) and second is weight 2 (exchangeable)
-  summ <- data.frame(n1 = rep(NA, length(pars)*nsim),
-                     n2 = rep(NA, length(pars)*nsim),
-                     mean1 = rep(NA, length(pars)*nsim),
-                     mean2 = rep(NA, length(pars)*nsim),                     
-                     sd1 = rep(NA, length(pars)*nsim),
-                     sd2 = rep(NA, length(pars)*nsim),
-                     trteff1 = rep(NA, length(pars)*nsim),
-                     trteff2 = rep(NA, length(pars)*nsim),
-                     MEMpexch = rep(NA, length(pars)*nsim), 
-                     MEMpnexch = rep(NA, length(pars)*nsim),
-                     MEMrpexch = rep(NA, length(pars)*nsim), 
-                     MEMrpnexch = rep(NA, length(pars)*nsim), 
-                     pval = rep(NA, length(pars)*nsim))
-  
-  
-  pb= txtProgressBar(min = 0, max = length(pars), style = 3, char=":)")
-  for(i in 1:length(pars)) {
-    ## Define the parameters
-    par <- pars[[i]] 
-    
-    #### Do the simulation with these settings
-    sfInit(parallel=T, cpus=12, type='SOCK')
-    sfLibrary(mvtnorm)
-    sfLibrary(gsDesign)
-    sfLibrary(car)
-    sfLibrary(nlme)
-    sfLibrary(HDInterval)
-    sfLibrary(lmtest)
-    sfLibrary(matrixStats)
-    sfClusterSetupRNG(seed=12345)
-    
-    sfExportAll()
-    sim.results <- t(sfLapply(rep(1,nsim),
-                              function(x) RunModels(n=par$n, means=par$means, sds=par$sds,
-                                                    trt_effect = par$trt_effect,
-                                                    marginal = marginal, 
-                                                    outcome_type = outcome_type,
-                                                    num_arms = num_arms)))
-    sfStop()
-    
-    result <- as.data.frame(unlist(sim.results))
-    
-    summ[(nsim*(i-1) + 1):(nsim*i),1] <- (result %>% filter(row_number() %% 13 == 1))
-    summ[(nsim*(i-1) + 1):(nsim*i),2] <- (result %>% filter(row_number() %% 13 == 2))
-    summ[(nsim*(i-1) + 1):(nsim*i),3] <- (result %>% filter(row_number() %% 13 == 3))
-    summ[(nsim*(i-1) + 1):(nsim*i),4] <- (result %>% filter(row_number() %% 13 == 4))
-    summ[(nsim*(i-1) + 1):(nsim*i),5] <- (result %>% filter(row_number() %% 13 == 5))
-    summ[(nsim*(i-1) + 1):(nsim*i),6] <- (result %>% filter(row_number() %% 13 == 6))    
-    summ[(nsim*(i-1) + 1):(nsim*i),7] <- (result %>% filter(row_number() %% 13 == 7))
-    summ[(nsim*(i-1) + 1):(nsim*i),8] <- (result %>% filter(row_number() %% 13 == 8))
-    summ[(nsim*(i-1) + 1):(nsim*i),9] <- (result %>% filter(row_number() %% 13 == 9))
-    summ[(nsim*(i-1) + 1):(nsim*i),10] <- (result %>% filter(row_number() %% 13 == 10))
-    summ[(nsim*(i-1) + 1):(nsim*i),11] <- (result %>% filter(row_number() %% 13 == 11))    
-    summ[(nsim*(i-1) + 1):(nsim*i),12] <- (result %>% filter(row_number() %% 13 == 12))
-    summ[(nsim*(i-1) + 1):(nsim*i),13] <- (result %>% filter(row_number() %% 13 == 0))
-    
-    setTxtProgressBar(pb, i)
-  }
-  close(pb)
-  
-  summ$outcome_type <- outcome_type
-  summ$num_arms <- num_arms
-  
-  return(summ)
-  
-}
-
-
-
-##########################################################
-############### SECTION 2:  RUN SIMULATION ############### 
+############### SECTION 1:  RUN SIMULATION ############### 
 ##########################################################
 
 
-### SECTION 2.1: Function to create parameter list of lists 
+### SECTION 1.1: Function to create parameter list of lists 
 
 parfunc <- function(means, sds = c(NA,NA), trt_effect = c(NA,NA)){
   pars=list(
@@ -168,7 +81,7 @@ parfunc <- function(means, sds = c(NA,NA), trt_effect = c(NA,NA)){
 }
 
 
-### SECTION 2.2: One-Arm Binary Outcome
+### SECTION 1.2: One-Arm Binary Outcome
 
 #scenario 1: equal group probabilities (0.1 and 0.1)
 system.time(OABin_11 <- RunSim(pars = parfunc(means = c(0.1,0.1)),
@@ -191,7 +104,7 @@ system.time(OABin_15 <- RunSim(pars = parfunc(means = c(0.1,0.5)),
                                num_arms = 1, outcome_type = "binary"))
 
 
-### SECTION 2.3: One-Arm Continuous Outcome
+### SECTION 1.3: One-Arm Continuous Outcome
 
 #scenario 1: equal group means (1 and 1) and sd = 1
 system.time(OACont_var1_11 <- RunSim(pars = parfunc(means = c(1,1), sds = c(1,1)),
@@ -254,7 +167,7 @@ system.time(OACont_var100_15 <- RunSim(pars = parfunc(means = c(1,5), sds = c(10
                                       num_arms = 1, outcome_type = "continuous"))
 
 
-### SECTION 2.4: Two-Arm Binary Outcome
+### SECTION 1.4: Two-Arm Binary Outcome
 
 #scenario 1: equal group probabilities (0.1 and 0.1) and treatment effects (0.1 and 0.1)
 system.time(TABin_11 <- RunSim(pars = parfunc(means = c(0.1,0.1), trt_effect = c(0.1,0.1)),
@@ -277,7 +190,7 @@ system.time(TABin_15 <- RunSim(pars = parfunc(means = c(0.1,0.1), trt_effect = c
                                num_arms = 2, outcome_type = "binary"))
 
 
-### SECTION 2.5: Two-Arm Continuous Outcome
+### SECTION 1.5: Two-Arm Continuous Outcome
 
 #scenario 1: equal group means (1 and 1) and treatment effects (1,1) and sd = 1
 system.time(TACont_var1_11 <- RunSim(pars = parfunc(means = c(1,1), trt_effect = c(1,1), sds = c(1,1)),
@@ -344,7 +257,7 @@ system.time(TACont_var100_15 <- RunSim(pars = parfunc(means = c(1,1), trt_effect
 
 
 ##########################################################
-############### SECTION 3:  AGGREGATE DATA ############### 
+############### SECTION 2:  AGGREGATE DATA ############### 
 ##########################################################
 
 allresults <- rbind(OABin_11, OABin_12, OABin_13, OABin_14, OABin_15,
@@ -395,11 +308,11 @@ write.csv(allresults_summary_08, "simulation_results_summary_08cutoff.csv")
 
 
 ##########################################################
-########## SECTION 4: RUN SIMULATION (n1 != n2) ########## 
+########## SECTION 3: RUN SIMULATION (n1 != n2) ########## 
 ##########################################################
 
 
-### SECTION 2.1: Function to create parameter list of lists 
+### SECTION 3.1: Function to create parameter list of lists 
 
 parfunc_unequaln <- function(means, sds = c(NA,NA), trt_effect = c(NA,NA), n2mult){
   pars=list(
@@ -422,7 +335,7 @@ parfunc_unequaln <- function(means, sds = c(NA,NA), trt_effect = c(NA,NA), n2mul
 
 
 
-### SECTION 2.2: One-Arm Binary Outcome
+### SECTION 3.2: One-Arm Binary Outcome
 
 #scenario 1: equal group probabilities (0.1 and 0.1) and unequal sample sizes (n2 = 0.1*N)
 system.time(OABin_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), n2mult = 0.1),
@@ -466,7 +379,7 @@ system.time(OABin_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.5),
 
 
 
-### SECTION 2.2: One-Arm Continuous Outcome
+### SECTION 3.3: One-Arm Continuous Outcome
 
 #scenario 1: equal group means (1 and 1) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
 system.time(OACont_var10_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), c(sqrt(10),sqrt(10)), n2mult = 0.1),
@@ -510,7 +423,7 @@ system.time(OACont_var10_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,
 
 
 
-### SECTION 2.2: Two-Arm Binary Outcome
+### SECTION 3.4: Two-Arm Binary Outcome
 
 #scenario 1: equal group probabilities (0.1 and 0.1) and treatment effects (0.1 and 0.1) and unequal sample sizes (n2 = 0.1*N)
 system.time(TABin_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1), trt_effect = c(0.1,0.1), n2mult = 0.1),
@@ -553,7 +466,7 @@ system.time(TABin_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(0.1,0.1),
                                     num_arms = 2, outcome_type = "binary"))
 
 
-### SECTION 2.2: Twp-Arm Continuous Outcome
+### SECTION 3.5: Twp-Arm Continuous Outcome
 
 #scenario 1: equal group means (1 and 1) and treatment effects (1 and 1) and sd = sqrt(10) and unequal sample sizes (n2 = 0.1*N)
 system.time(TACont_var10_11_n201 <- RunSim(pars = parfunc_unequaln(means = c(1,1), trt_effect = c(1,1), c(sqrt(10),sqrt(10)), n2mult = 0.1),
@@ -600,7 +513,7 @@ system.time(TACont_var10_15_n2025 <- RunSim(pars = parfunc_unequaln(means = c(1,
 
 
 ##########################################################
-########## SECTION 5:  AGGREGATE UNEQUAL N DATA ########## 
+########## SECTION 4:  AGGREGATE UNEQUAL N DATA ########## 
 ##########################################################
 
 allresults_unequaln <- rbind(OABin_11_n201, OABin_12_n201, OABin_13_n201, OABin_14_n201, OABin_15_n201,

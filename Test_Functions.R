@@ -361,7 +361,7 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
     #simulate data:
     #primary
     trt <- rbinom(n[1], 1, prob = 0.5) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
-    Y <- rbinom(n[1], 1, prob= (means[1]*(1-trt) + trt_effect[1]*(trt))) 
+    Y <- rbinom(n[1], 1, prob= (means[1] + trt_effect[1]*(trt))) 
     primary <- data.frame(Y, trt)
     primary$df <- 1
     primary$secondary <- 0
@@ -370,7 +370,7 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
     secondary <- NULL
     for(i in 2:n_sources) {
       trt <- rbinom(n[i], 1, 0.5) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
-      Y <- rbinom(n[i], 1, prob= (means[i]*(1-trt) + trt_effect[i]*(trt)))
+      Y <- rbinom(n[i], 1, prob= (means[i] + trt_effect[i]*(trt)))
       df <- i
       secondary <- rbind(secondary, data.frame(Y,trt,df))
     }
