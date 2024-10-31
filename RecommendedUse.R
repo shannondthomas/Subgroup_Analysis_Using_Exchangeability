@@ -137,6 +137,7 @@ ft1
 ft2 <- merge_v(ft1, j = c("Sample \nSize Dist","Recommended Use","MEM \nCutoff"))
 ft2 %>% theme_box()
 
+##NEED TO UPDATE THIS AFTER RERUNNING
 ft3 <- ft2 %>% theme_box() %>%
   merge_at(i = 1:10, j = 4) %>% #0.5 n2mult, confirmatory, 0.2 cutoff, 1 arm section
     merge_at(i = 1:4, j = 5) %>% 
@@ -164,46 +165,44 @@ ft3 <- ft2 %>% theme_box() %>%
     merge_at(i = 28:30, j = 5) %>%
       merge_at(i = 29:30, j = 6) %>%
         merge_at(i = 29:30, j = 7) %>%
-  merge_at(i = 31:35, j = 4) %>% #0.5 n2mult, exploratory, 0.8 cutoff, 2 arm section
-    merge_at(i = 31:32, j = 5) %>%
-      merge_at(i = 31:32, j = 6) %>%
-        merge_at(i = 31:32, j = 7) %>%
-    merge_at(i = 33:35, j = 5) %>%
-      merge_at(i = 33:35, j = 6) %>%
-        merge_at(i = 34:35, j = 7) %>%
-  merge_at(i = 36:41, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 1 arm section
-    merge_at(i = 36:39, j = 5) %>%
-      merge_at(i = 36:37, j = 6) %>%
-        merge_at(i = 36:37, j = 7) %>%
-      merge_at(i = 38:39, j = 6) %>%
-        merge_at(i = 38:39, j = 7) %>%
-    merge_at(i = 40:41, j = 5) %>%
-      merge_at(i = 40:41, j = 6) %>%
-        merge_at(i = 40:41, j = 7) %>%
-  merge_at(i = 42:44, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 2 arm section
-    merge_at(i = 43:44, j = 5) %>%
-      merge_at(i = 43:44, j = 6) %>%
-        merge_at(i = 43:44, j = 7) %>%
-  merge_at(i = 45:46, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 1 arm section
-  merge_at(i = 47:48, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 2 arm section
-  merge_at(i = 50:52, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 1 arm section
-    merge_at(i = 50:51, j = 5) %>%
-  merge_at(i = 54:62, j = 4) %>% #0.1 n2mult, confirmatory, 0.2 cutoff, 1 arm section
-    merge_at(i = 54:59, j = 5) %>%
-      merge_at(i = 54:56, j = 6) %>%
-        merge_at(i = 54:56, j = 7) %>%
-      merge_at(i = 57:59, j = 6) %>%
-        merge_at(i = 57:59, j = 7) %>%
-    merge_at(i = 60:62, j = 5) %>%
-      merge_at(i = 60:62, j = 6) %>%
-        merge_at(i = 60:62, j = 7) %>%
-  merge_at(i = 64:65, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 1 arm section
-  merge_at(i = 66:67, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 2 arm section
-  merge_at(i = 69:70, j = 4) %>% #0.1 n2mult, exploratory, 0.8 cutoff, 1 arm section
-  merge_at(i = 71:72, j = 4)     #0.1 n2mult, exploratory, 0.8 cutoff, 2 arm section
+  merge_at(i = 31:34, j = 4) %>% #0.5 n2mult, exploratory, 0.8 cutoff, 2 arm section
+    merge_at(i = 32:34, j = 5) %>%
+      merge_at(i = 32:34, j = 6) %>%
+        merge_at(i = 33:34, j = 7) %>%
+  merge_at(i = 35:40, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 1 arm section
+    merge_at(i = 35:38, j = 5) %>%
+      merge_at(i = 35:36, j = 6) %>%
+        merge_at(i = 35:36, j = 7) %>%
+      merge_at(i = 37:38, j = 6) %>%
+        merge_at(i = 37:38, j = 7) %>%
+    merge_at(i = 39:40, j = 5) %>%
+      merge_at(i = 39:40, j = 6) %>%
+        merge_at(i = 39:40, j = 7) %>%
+  merge_at(i = 41:42, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 2 arm section
+    merge_at(i = 41:42, j = 5) %>%
+      merge_at(i = 41:42, j = 6) %>%
+        merge_at(i = 41:42, j = 7) %>%
+  merge_at(i = 43:44, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 1 arm section
+  merge_at(i = 45:46, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 2 arm section
+  merge_at(i = 48:50, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 1 arm section
+    merge_at(i = 48:49, j = 5) %>%
+  merge_at(i = 51:52, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 2 arm section
+  merge_at(i = 53:61, j = 4) %>% #0.1 n2mult, confirmatory, 0.2 cutoff, 1 arm section
+    merge_at(i = 53:58, j = 5) %>%
+      merge_at(i = 53:55, j = 6) %>%
+        merge_at(i = 53:55, j = 7) %>%
+      merge_at(i = 56:58, j = 6) %>%
+        merge_at(i = 56:58, j = 7) %>%
+    merge_at(i = 59:61, j = 5) %>%
+      merge_at(i = 59:61, j = 6) %>%
+        merge_at(i = 59:61, j = 7) %>%
+  merge_at(i = 63:64, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 1 arm section
+  merge_at(i = 65:66, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 2 arm section
+  merge_at(i = 68:69, j = 4) %>% #0.1 n2mult, exploratory, 0.8 cutoff, 1 arm section
+  merge_at(i = 70:71, j = 4)     #0.1 n2mult, exploratory, 0.8 cutoff, 2 arm section
+
 
 ft3 %>% save_as_docx(path = "RecommendedUse_Master.docx")
-
 
 
 
