@@ -26,6 +26,9 @@
 #           trt_S2: treatment AND level 2 indicator (trt*S2)  
 #
 #        *THE FOLLOWING PARAMETERS MUST BE USED IF data IS NOT PROVIDED.
+#         IF NO DATA IS PROVIDED, THE USER SHOULD SET SEED BEFORE RUNNING
+#         RunSim() FOR REPRODUCIBILITY. 
+#
 #         ALL OF THE FOLLOWING ARE VECTORS OF LENGTH 2 (n_sources)
 #        n - sample sizes for each subgroup level
 #        means - means for each subgroup 
@@ -251,41 +254,6 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
   n_sources <- length(n)
   
   ###ONE-ARM
-  
-  if((num_arms == 1) && (outcome_type == "binary")){
-    
-    #simulate data:
-    #primary/level 1 of grouping variable
-    Y <- rbinom(n[1], 1, prob=means[1]) 
-    primary <- data.frame(Y)
-    primary$df <- 1
-    primary$secondary <- 0
-    
-    #secondary
-    secondary <- NULL
-    for(i in 2:n_sources) {
-      Y <- rbinom(n[i], 1, prob= means[i])
-      df <- i
-      secondary <- rbind(secondary, data.frame(Y,df))
-    }
-    secondary$secondary <- 1
-    
-    
-    #data frame together
-    data <- data.frame(rbind(primary, secondary))
-    
-    
-    #dummies for source
-    for(i in 2:n_sources) {
-      x <- 1*(data$df==i)
-      data <- cbind(data, x)
-    }
-    
-    names(data) <- c("Y", "df", "secondary", paste("S", 2:n_sources, sep=""))
-    
-    return(data)
-  }
-  
   if((num_arms == 1) && (outcome_type == "binary")){
     
     #simulate data:
