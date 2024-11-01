@@ -40,9 +40,7 @@ If box above is checked and if no simulated/synthetic data files are provided by
 
 ## Abstract
 
-<!--
-Provide a short (< 100 words), high-level description of the data
--->
+The data for this paper are simulated and reproducible using the code in the GitHub repository listed below. The case studies used values available in the supplement of the papers listed below. 
 
 ## Availability
 
@@ -54,7 +52,11 @@ If the data are publicly available, see the *Publicly available data* section. O
 
 ### Publicly available data
 
-- [x] Data are available online at: CITE GITHUB AND PAPERS/SUPPLEMENTS
+- [x] Data are available online at:
+
+- Simulation - https://github.com/shannondthomas/Subgroup_Analysis_Using_Exchangeability
+- Case Study 1 - https://www.nejm.org/doi/full/10.1056/NEJMoa1908639 
+- Case Study 2 - https://pmc.ncbi.nlm.nih.gov/articles/PMC3991697/#SM 
 
 - [ ] Data are available as part of the paper’s supplementary material.
 
@@ -94,7 +96,7 @@ Check all that apply
 A data dictionary provides information that allows users to understand the meaning, format, and use of the data.
 -->
 
-- [x] Provided by authors in the following file(s): CITE GITHUB README
+- [x] Provided by authors in the following file(s): https://github.com/shannondthomas/Subgroup_Analysis_Using_Exchangeability
 - [ ] Data file(s) is(are) self-describing (e.g., netCDF files)
 - [ ] Available at the following URL: 
 
@@ -108,9 +110,7 @@ OPTIONAL: Provide any additional details that would be helpful in understanding 
 
 ## Abstract
 
-<!--
-Provide a short (< 100 words), high-level description of the code. If necessary, more details can be provided in files that accompany the code. If no code is provided, please state this and say why (e.g., if the paper contains no computational work).
--->
+The code for this paper is available on the GitHub repository. It has several .R files that can run the entire analysis, and the CaseStudies.R file can be adapted to run simulations and/or models for additional scenarios. 
 
 ## Description
 
@@ -144,19 +144,20 @@ Please cite all software packages in the References Section in similar fashion t
 
 #### Version of primary software used
 
-<!--
-(e.g., R version 3.6.0)
--->
 R version 4.3.2
 
 #### Libraries and dependencies used by the code
 
+- mvtnorm - version 1.2-4
+- invgamma - version 1.1
+- lmtest - version 0.9-40
+- matrixStats - version 1.3.0
+- xtable - version 1.8-4
+- tidyverse - version 2.0.0
+- flextable - version 0.9.6
+- gridExtra - version 2.3
+- snowfall - version 1.84-6.3
 
-CITE ALL PACKAGES
-
-<!--
-Include version numbers (e.g., version numbers for any R or Python packages used)
--->
 
 ### Supporting system/hardware requirements (optional)
 
@@ -199,8 +200,8 @@ The provided workflow reproduces:
 
 - [x] Any numbers provided in text in the paper
 - [x] The computational method(s) presented in the paper (i.e., code is provided that implements the method(s))
-- [ ] All tables and figures in the paper
-- [x] Selected tables and figures in the paper, as explained and justified below: all but Recommended Use Table (manually made)
+- [x] All tables and figures in the paper
+- [ ] Selected tables and figures in the paper, as explained and justified below: 
 
 ## Workflow
 
@@ -212,7 +213,7 @@ The workflow is available:
 Check all that apply, and in the case of a Git repository include unique identifier, such as specific commit ID, branch, release, or tag.
 -->
 - [ ] As part of the paper’s supplementary material.
-- [x] In this Git repository: *ADD LINK*
+- [x] In this Git repository: https://github.com/shannondthomas/Subgroup_Analysis_Using_Exchangeability 
 - [ ] Other (please specify):
 
 <!--
@@ -237,6 +238,7 @@ Check all that apply
 <!--
 Describe how to use the materials provided to reproduce analyses in the manuscript. Additional details can be provided in file(s) accompanying the reproducibility materials. If no workflow is provided, please state this and say why (e.g., if the paper contains no computational work).
 -->
+See the ReadMe file on the GitHub repository for instructions on how to run the code. 
 
 ### Expected run-time
 
