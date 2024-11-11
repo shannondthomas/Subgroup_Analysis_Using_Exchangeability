@@ -1,11 +1,13 @@
 #################################################################################
 # TITLE: CaseStudies.R
 #
-# PURPOSE: Run all models with specific binary results for case studies. 
+# PURPOSE: Run all models based on summary statistics from case studies and 
+#          evaluate model performance in those settings. 
 #
-# INPUT: data from clinical trials
+# INPUT: summary statistics from clinical trials
 #
-# OUTPUT: p-values and probabilities of exchangeability for each case study
+# OUTPUT: p-values, probabilities of exchangeability, power, and t1e
+#         for each case study
 #
 # SECTIONS: Section 0 - source functions and load packages
 #           Section 1 - function to run simulations given summary stats and   
@@ -14,7 +16,12 @@
 #                       to match the exact counts rather than simulating 
 #                       random counts (RunModels() would simulate random counts
 #                       if no data was given)
-#           Section 3 - run case studies
+#           Section 3 - run binary case study
+#           Section 4 - function to create continuous data set given summary 
+#                       stats (n for each group x trt), means, and sds
+#                       (RunModels() would simulate random data if no data 
+#                        was given)
+#           Section 5 - run continuous case study
 #
 # AUTHOR: Shannon Thomas
 # DATE CREATED: OCT 29, 2024
@@ -194,7 +201,7 @@ binarydataset <- function(n, events, num_arms){
 
 
 ##########################################################
-################ SECTION 3:  CASE STUDIES ################ 
+############# SECTION 3: BINARY CASE STUDIES ############# 
 ##########################################################
 
 
@@ -291,182 +298,161 @@ RunModels(num_arms = 1,
 
 
 
+##########################################################
+######## SECTION 4:  CONTINUOUS DATA SET FUNCTION ######## 
+##########################################################
+
+continuousdataset <- function(n, means, sds, num_arms){
+  #function to create data set with summary statistics matching those given
+  
+  #n = vector of sample sizes for each group (length = number of treatment arms x number of subgroups)
+  #If two arm, n[1] = samp size of trt and subgroup level 1,
+  #            n[2] = samp size of placebo and subgroup level 1,
+  #            n[3] = samp size of trt and subgroup level 2,
+  #            n[4] = samp size of placebo and subgroup level 2.
+  #
+  #If one arm, n[1] = samp size of subgroup level 1,
+  #            n[2] = samp size of subgroup level 2
+  
+  #means: vector of means for each subgroup x treatment group (same ordering as n above)
+  #sd: vector of sds for each subgroup x treatment group (same ordering as n above)
+  
+  tolerance <- 0.1
+  
+  n_sources <- 2
+  
+  if(num_arms == 2){
+    truetrteff <- (means[1] - means[2]) - (means[3] - means[4])
+    simtrteff <- rep(1000000,2)
+    
+  }
+  if(num_arms == 1){
+    truetrteff <- means[1] - means[2]
+    simtrteff <- 1000000
+  }
+  
+  simmeans <- rep(1000000, num_arms*2)
+  simsds <- rep(1000000, num_arms*2)
+  
+  while((sum(abs(simtrteff - truetrteff)) > tolerance) || 
+        (sum(abs(simmeans - means)) > tolerance) || 
+        (sum(abs(simsds - sds)) > tolerance)){
+  
+        ###ONE-ARM
+        if((num_arms == 1)){
+          #simulate data:
+          #primary
+          Y <- rnorm(n[1], mean= means[1], sd=sds[1])
+          primary <- data.frame(Y)
+          primary$df <- 1
+          primary$secondary <- 0
+          
+          #secondary
+          secondary <- NULL
+          for(i in 2:n_sources) {
+            Y <- rnorm(n[i], mean= means[i], sd=sds[i])
+            df <- i
+            secondary <- rbind(secondary, data.frame(Y,df))
+          }
+          secondary$secondary <- 1
+          
+          #data frame together
+          data <- data.frame(rbind(primary, secondary))
+          
+          
+          #dummies for source
+          for(i in 2:n_sources) {
+            x <- 1*(data$df==i)
+            data <- cbind(data, x)
+          }
+          
+          names(data) <- c("Y", "df", "secondary", paste("S", 2:n_sources, sep=""))
+        }
+        
+        
+        ###TWO-ARM
+        if((num_arms == 2)){
+          #simulate data:
+          #primary
+          trt <- rep(c(1, 0), times = c(n[1],n[2]))
+          Y <- rnorm(n[1]+n[2], mean= means[1]*trt + means[2]*(1-trt), sd=sds[1]*trt + sds[2]*(1-trt))
+          primary <- data.frame(Y, trt)
+          primary$df <- 1
+          primary$secondary <- 0
+          
+          #secondary
+          secondary <- NULL
+            trt <- rep(c(1, 0), times = c(n[3],n[4]))
+            Y <- rnorm(n[3]+n[4], mean= means[3]*trt + means[4]*(1-trt), sd=sds[3]*trt + sds[4]*(1-trt))
+            df <- 2
+            secondary <- rbind(secondary, data.frame(Y,trt,df))
+
+          secondary$secondary <- 1
+          
+          #data frame together
+          data <- data.frame(rbind(primary, secondary))
+    
+          #dummies for source
+          for(i in 2:n_sources) {
+            x <- 1*(data$df==i)
+            data <- cbind(data, x)
+          }
+          
+          #create interactions for source*trt which will decide whether I borrow or not on the trt effect
+          for(i in 2:n_sources) {
+            x <- 1*(data$df==i) * data$trt
+            data <- cbind(data, x)
+          }
+          names(data) <- c("Y", "trt", "df", "secondary", paste("S", 2:n_sources, sep=""), paste("trt_S", 2:n_sources, sep=""))
+          
+          data$type <- 1*(data$df==1 & data$trt==0) + 2*(data$df==1 & data$trt==1) + 3*(data$df==2 & data$trt==0) + 4*(data$df==2 & data$trt==1) + 5*(data$df==3 & data$trt==0) + 6*(data$df==3 & data$trt==1)
+          
+         }
+    
+        #recalculate summary stats 
+        if(num_arms == 2){
+          simmeans <- c(mean(data$Y[(data$trt == 1) & (data$secondary == 0)]),
+                        mean(data$Y[(data$trt == 0) & (data$secondary == 0)]),
+                        mean(data$Y[(data$trt == 1) & (data$secondary == 1)]),
+                        mean(data$Y[(data$trt == 0) & (data$secondary == 1)]))
+          
+          simsds <- c(sd(data$Y[(data$trt == 1) & (data$secondary == 0)]),
+                      sd(data$Y[(data$trt == 0) & (data$secondary == 0)]),
+                      sd(data$Y[(data$trt == 1) & (data$secondary == 1)]),
+                      sd(data$Y[(data$trt == 0) & (data$secondary == 1)]))
+          
+          simtrteff <- (mean(data$Y[(data$trt == 1) & (data$secondary == 0)]) - mean(data$Y[(data$trt == 0) & (data$secondary == 0)])) -
+                         (mean(data$Y[(data$trt == 1) & (data$secondary == 1)]) - mean(data$Y[(data$trt == 0) & (data$secondary == 1)]))
+        }
+        if(num_arms == 1){
+          simmeans <- c(mean(data$Y[data$secondary == 0]),
+                        mean(data$Y[data$secondary == 1]))
+          
+          simsds <- c(sd(data$Y[data$secondary == 0]),
+                      sd(data$Y[data$secondary == 1])) 
+          
+          simtrteff <- simmeans[1] - simmeans[2]
+        }
+        # print(paste("difference in trt eff = ", sum(abs(simtrteff - truetrteff))))
+        # print(paste("difference in means = ", sum(abs(simmeans - means))))
+        # print(paste("difference in sds = ",sum(abs( simsds - sds))))
+    
+    }
+    
+    return(data)
+  
+}
+
+# #test function
+# set.seed(10)
+# test1 <- continuousdataset(n = c(100,150,200,250), means = c(10,3,4,5), sds = c(1,1.33,1.4,1.5), num_arms = 2)
+# set.seed(11)
+# test2 <- continuousdataset(n = c(100,150), means = c(10,3), sds = c(12,1.3), num_arms = 1)
 
 
-
-
-
-
-# #ALBIGLUTIDE (MAY WORK BUT REALLY LOW POWER)
-# #TESTING FOR DIFFERENCE IN PROPORTION WITH COMPOSITE ENDPOINT BY SMOKING STATUS
-# #source = current smoker vs never/former smoker
-# #trt = albiglutide
-# n <- c(737,751,2083+1910,1999+1981) #n[1] is samp size for current smoker + albiglutide
-#                                     #n[2] is samp size for current smoker + placebo
-#                                     #n[3] is samp size for nonsmoker (former or never) + albiglutide
-#                                     #n[4] is samp size for nonsmoker (former or never) + placebo
-# 
-# events <- c(72,63,159+107,210+155)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# casestudy_sim_summary(nsim = 1000, num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# #ALBIGLUTIDE (MAY WORK BUT REALLT LOW POWER)
-# #TESTING FOR DIFFERENCE IN PROPORTION WITH COMPOSITE ENDPOINT BY NUMBER OF ARTERIAL BEDS
-# #source = 1 arterial bed vs 2/3 arterial beds
-# #trt = albiglutide
-# n <- c(3846,3856,877,865) #n[1] is samp size for pt with 1 affected bed + albiglutide
-#                           #n[2] is samp size for pt with 1 affected bed + placebo
-#                           #n[3] is samp size for pt with 2 or 3 affected beds + albiglutide
-#                           #n[4] is samp size for pt with 2 or 3 affected beds + placebo
-# 
-# events <- c(209,301,129,127)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# casestudy_sim_summary(nsim = 1000, num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# 
-# 
-# 
-# #PAOLA-1 (MAY WORK)
-# n <- c(255,132,282,137) #n[1] is samp size for HRD positve + trt
-#                         #n[2] is samp size for HRD positive + placebo
-#                         #n[3] is samp size for HRD neg/unknown + trt
-#                         #n[4] is samp size for HRD neg/unknown + placebo
-# 
-# events <- c(136,104,230,118)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# casestudy_sim_summary(num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# 
-# 
-# #ISIS-2 (MAY WORK BUT REALLY LOW POWER)
-# n <- c(1357,1442,7228,7157) #n[1] is samp size for gemini/libra + aspirin
-# #n[2] is samp size for gemini/libra + placebo
-# #n[3] is samp size for other + aspirin
-# #n[4] is samp size for other + placebo
-# 
-# events <- c(150,147,654,868)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# casestudy_sim_summary(nsim = 1000, num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# 
-# #ISIS-2 (MAY WORK BUT REALLY LOW POWER)
-# n <- c(1357,1442,7228,7157) #n[1] is samp size for gemini/libra + aspirin
-# #n[2] is samp size for gemini/libra + placebo
-# #n[3] is samp size for other + aspirin
-# #n[4] is samp size for other + placebo
-# 
-# events <- c(150,147,654,868)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# casestudy_sim_summary(nsim = 1000, num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# 
-# #WEGOVY (MAY WORK BUT REALLY LOW POWER)
-# n <- c(1082,1016,832,813) #n[1] is samp size for BMI < 35 + semaglutide
-# #n[2] is samp size for BMI < 35 + placebo
-# #n[3] is samp size for BMI >= 35 + semaglutide
-# #n[4] is samp size for BMI >= 35 + placebo
-# 
-# events <- c(60,59,43,79)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# casestudy_sim_summary(nsim = 1000, num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# 
-# 
-# #IMpassion 130 X (NOPE)
-# n <- c(185,184,266,267) 
-# 
-# events <- c(94,110,161,169)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# 
-# #Keynote 042 (NOPE)
-# n <- c(299,300,338,337)
-# events <- c(142,101,124,98)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# 
-# 
-# #mammograms (HAVENT RUN YET BUT PROBABLY NOT)
-# n <- c(14842,7103,25476,12840)
-# events <- c(24,12,42,33)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# casestudy_sim_summary(nsim = 1000, num_arms = 2, outcome_type = "binary",n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# 
-# #ischemic vs nonischemic amlodipine
-# n <- c(362,370,209,212)
-# events <- c(123,126,37,66)
-# 
-# 
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-# casestudy_sim_summary(nsim = 1000, outcome_type = "binary", num_arms = 2, n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-
+##########################################################
+########### SECTION 5: CONTINUOUS CASE STUDIES ########### 
+##########################################################
 
 #TRIKAFTA
 n <- c(44,38,141,150)
@@ -476,10 +462,11 @@ sds <- c((13.6-11.3)/qnorm(0.975),2.5/qnorm(0.975), (14.4-13)/qnorm(0.975), (1.1
 ediff1 <- means[1] - means[2]
 ediff2 <- means[3] - means[4]
 
-casestudy_sim_summary(nsim = 1000, outcome_type = "continuous", num_arms = 2, n = n, means = means, sds = sds, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
+casestudy_sim_summary(nsim = 10000, outcome_type = "continuous", num_arms = 2, n = n, means = means, sds = sds, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
 
 set.seed(15)
-RunModels(n = c(n[1]+n[2],n[3]+n[4]), means = c(means[2],means[4]), 
-          sds = c(max(sds[1],sds[2]), max(sds[3],sds[4])), 
-          trt_effect = c(ediff1, ediff2), num_arms = 2, outcome_type = "continuous", marginal = "BIC")
+RunModels(num_arms = 2,
+          outcome_type = "continuous",
+          marginal = "BIC",
+          data = continuousdataset(n = n, means = means, sds = sds, num_arms = 2))
 
