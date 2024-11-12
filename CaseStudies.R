@@ -280,23 +280,6 @@ RunModels(num_arms = 1,
 
 
 
-#TESTING FOR DIFFERENCE IN THOSE WITH NO PA+ CULTURES VS THOSE WITH ANY (significant difference was found by cycled/culture-based groups)
-#source/trt = cycled vs culture
-n <- c(152,152) #n[1] is samp size for cycled
-                #n[2] is samp size for culture-based
-
-events <- c(109,85)
-
-#test one-arm setting
-(events[1]/n[1] - events[2]/n[2])  #estimated difference in effect size
-casestudy_sim_summary(nsim = 1000, num_arms = 1, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-RunModels(num_arms = 1,
-          outcome_type = "binary",
-          marginal = "BIC",
-          data = binarydataset(n = n, events = events, num_arms = 1))
-
-
-
 
 ##########################################################
 ######## SECTION 4:  CONTINUOUS DATA SET FUNCTION ######## 
