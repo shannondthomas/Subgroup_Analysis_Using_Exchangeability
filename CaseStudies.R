@@ -204,63 +204,6 @@ binarydataset <- function(n, events, num_arms){
 ############# SECTION 3: BINARY CASE STUDIES ############# 
 ##########################################################
 
-
-# #TESTING FOR DIFFERENCE IN PROPORTION PA+ AT WEEK 70
-# #source = cycle-based OR culture-based
-# #trt = ciprofloxacin
-# n <- c(67,65,66,69) #n[1] is samp size for cycle based TIS-ciprofloxacin
-#                     #n[2] is samp size for cycle based TIS-placebo
-#                     #n[3] is samp size for culture based TIS-ciprofloxacin
-#                     #n[4] is samp size for culture based TIS-placebo
-# 
-# events <- c(7,6,10,6)
-# 
-# #WEEK 46 VALUES 
-# # n <- c(87,88,88,88) #n[1] is samp size for cycle based TIS-ciprofloxacin
-# # #n[2] is samp size for cycle based TIS-placebo
-# # #n[3] is samp size for culture based TIS-ciprofloxacin
-# # #n[4] is samp size for culture based TIS-placebo
-# # 
-# # events <- c(4,11,12,6)
-# 
-# #test two-arm setting
-# effsize <- (events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4]) #estimated difference in effect size
-# effsize
-#   
-# casestudy_sim_summary(num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 2,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n = n, events = events, num_arms = 2))
-# 
-# #test one-arm setting
-# #pooled
-# n1 <- c(n[1]+n[3], n[2] + n[4])
-# events1 <- c(events[1]+events[3],events[2]+events[4])
-# effsize1 <- (events[1] + events[3])/(n[1]+n[3]) - (events[2] + events[4])/(n[2]+n[4]) #estimated difference in effect size
-# effsize1
-# casestudy_sim_summary(num_arms = 1, outcome_type = "binary", n = n1, events = events1, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 1,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n=n1, 
-#                                events = events1, 
-#                                num_arms = 1))
-# 
-# #treatment group only (NOT THIS ONE - WAY WORSE)
-# n1 <- c(n[1],n[3])
-# events1 <- c(events[1],events[3])
-# effsize1 <- events[1]/n[1] - events[3]/n[3] #estimated difference in effect size
-# effsize1
-# casestudy_sim_summary(num_arms = 1, outcome_type = "binary", n = n1, events = events1, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
-# RunModels(num_arms = 1,
-#           outcome_type = "binary",
-#           marginal = "BIC",
-#           data = binarydataset(n=n1, 
-#                                events = events1, 
-#                                num_arms = 1))
-# 
-
 #TESTING FOR DIFFERENCE IN SAE RESPIRATORY EVENTS 
 #(significant difference was found by trt/placebo groups)
 #source/trt = ciprofloxacin
