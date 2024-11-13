@@ -40,6 +40,8 @@
 # alldat <- read.csv("simulation_results_raw.csv")
 alldat <- read.csv("simulation_results_summary.csv")
 alldat_unequaln <- read.csv("simulation_results_unequaln_summary.csv")
+alldat_08 <- read.csv("simulation_results_summary_08cutoff.csv")
+alldat_08_unequaln <- read.csv("simulation_results_unequaln_summary_08cutoff.csv")
 
 #R version 4.3.2 was used for this project.
 library(tidyverse) #version 2.0.0
@@ -79,11 +81,21 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
   
   #define n2mult
   if(unequal_n != FALSE){
+    if(MEM_cutoff != 0.2){
+      foldername <- paste("Figures/UnequalSamp/", MEM_cutoff, "Cutoff/", sep = "")
+    }
+    else{
+      foldername <- "Figures/UnequalSamp/"
+    }
     subdat_summary$n2_prop <- paste("n2 =",round(subdat_summary$n2/(subdat_summary$totsampsize),2),"N")
-    foldername <- "Figures/UnequalSamp/"
   }
   else{
-    foldername <- "Figures/"
+    if(MEM_cutoff != 0.2){
+      foldername <- paste("Figures/EqualSamp/", MEM_cutoff, "Cutoff/", sep = "")
+    }
+    else{
+      foldername <- "Figures/EqualSamp/"
+    }
   }
   
   #define effect size difference for plots
@@ -120,8 +132,9 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
             axis.text.y=element_blank(), 
             axis.ticks.y=element_blank(),
             plot.margin = unit(c(5.5,5.5,5.5,-1),"pt")) +
-      #scale_fill_gradientn(colors = c("red3","white","green4"), values = scales::rescale(c(-0.028,0,0.187)))
-      scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))
+      {if(MEM_cutoff == 0.2)scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))} +
+      {if(MEM_cutoff == 0.8)scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))} 
+    
     
     p2 <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize, fill=round(MEMr_power - pval_power,7))) + 
       geom_tile() + 
@@ -140,9 +153,10 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
             legend.key.width = unit(0.3, "cm"),
             strip.text = element_blank(),
             plot.margin = unit(c(5.5,-1,5.5,5.5),"pt")) +
-      #scale_fill_gradientn(colors = c("green4","white","red3"), values = scales::rescale(c(-0.028,0,0.187)))
-      {if(outcome_type == "continuous")scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.6,0,0.6))} +
-      {if(outcome_type == "binary")scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))}
+      {if((outcome_type == "continuous")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.6,0,0.6))} +
+      {if((outcome_type == "binary")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
+      {if((outcome_type == "continuous")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-1,1), colors = c("green4","white", "purple4"), breaks = c(-1,0,1))} +
+      {if((outcome_type == "binary")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-0.2,0.2), colors = c("green4","white", "purple4"), breaks = c(-0.2,0,0.2))}
     
     jpeg(paste(foldername,"DiffMEMr_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,".jpg",sep = ""), 
          height = 0.25*ht, width = 0.25*width)
@@ -174,9 +188,9 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
               axis.text.y=element_blank(), 
               axis.ticks.y=element_blank(),
               plot.margin = unit(c(5.5,5.5,5.5,-1),"pt")) +
-        #scale_fill_gradientn(colors = c("red3","white","green4"), values = scales::rescale(c(-0.028,0,0.187)))
-        scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))
-      
+        {if(MEM_cutoff == 0.2)scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))} + 
+        {if(MEM_cutoff == 0.8)scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))} 
+        
       p2_MEM <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize, fill=round(MEM_power - pval_power,7))) + 
         geom_tile() + 
         geom_text(aes(label=round(MEM_power - pval_power,4)),size = 5) + 
@@ -194,9 +208,10 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
               legend.key.width = unit(0.3, "cm"),
               strip.text = element_blank(),
               plot.margin = unit(c(5.5,-1,5.5,5.5),"pt")) +
-        #scale_fill_gradientn(colors = c("green4","white","red3"), values = scales::rescale(c(-0.028,0,0.187)))
-        {if(outcome_type == "continuous")scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.6,0,0.6))} +
-        {if(outcome_type == "binary")scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))}
+        {if((outcome_type == "continuous")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.6,0,0.6))} +
+        {if((outcome_type == "binary")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
+        {if((outcome_type == "continuous")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-1,1), colors = c("green4","white", "purple4"), breaks = c(-1,0,1))} +
+        {if((outcome_type == "binary")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-0.2,0.2), colors = c("green4","white", "purple4"), breaks = c(-0.2,0,0.2))}
       
       jpeg(paste(foldername, "DiffMEM_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,".jpg",sep = ""), 
            height = 0.25*ht, width = 0.25*width)
@@ -272,7 +287,7 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
 ################# SECTION 3: MAKE HEATMAPs #################
 ############################################################
 
-
+#0.2 cutoff
 heatmap_func(alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
 heatmap_func(alldat, num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05)
 heatmap_func(alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
@@ -289,7 +304,21 @@ heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "continuous", ht = 20
              unequal_n = TRUE)
 
 
+#0.8 cutoff
+heatmap_func(alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05)
+heatmap_func(alldat_08, num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05)
+heatmap_func(alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05)
+heatmap_func(alldat_08, num_arms = 2, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05)
 
+
+heatmap_func(alldat_08_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+             unequal_n = TRUE)
+heatmap_func(alldat_08_unequaln, num_arms = 1, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+             unequal_n = TRUE)
+heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+             unequal_n = TRUE)
+heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+             unequal_n = TRUE)
 
 
 
