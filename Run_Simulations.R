@@ -17,12 +17,20 @@
 #         simulation_results_summary_08cutoff.csv  - summary of power for each 
 #                                                    test for a 0.8 MEM cutoff 
 #                                                    and 0.05 pval
+#         simulation_results_summary_calibratedcutoff.csv  - summary of power 
+#                                                            for each test using
+#                                                            MEM cutoffs calib-
+#                                                            rated to 5% t1e
 #         simulation_results_unequaln_raw.csv - same as above for unequal n
 #
 #         simulation_results_unequaln_summary.csv - same as above for unequal n
 #
 #         simulation_results_unequaln_summary_08cutoff.csv  - same as above for 
 #                                                             unequal n
+#
+#         simulation_results_unequaln_summary_calibratedcutoff.csv - same as 
+#                                                                    above for 
+#                                                                    unequal n
 #
 # SECTIONS: Section 1
 #              run simulations with various parameter settings 
@@ -304,7 +312,30 @@ allresults_summary_08$pvalcutoff <- p_cutoff
 
 write.csv(allresults_summary_08, "simulation_results_summary_08cutoff.csv")
 
+#T1E RATE CALIBRATED CUTOFF
+MEM_cutoff <- "calibrated"
+p_cutoff <- 0.05 
+nsim <- 10000
 
+allresults$effsize <- ifelse(allresults$num_arms == 1, 
+                             allresults$mean2 - allresults$mean1, 
+                             allresults$trteff2 - allresults$trteff1)
+cutoffs <- allresults[allresults$effsize == 0,] %>% group_by(n1, n2, outcome_type, num_arms, sd1, sd2) %>%
+  summarize(q5_MEM = quantile(MEMpexch, 0.05, na.rm = TRUE), 
+            q5_MEMr = quantile(MEMrpexch, 0.05)) %>% 
+  as.data.frame()
+allresults_cutoffs <- merge(allresults, cutoffs)
+
+allresults_summary_calibrated <- allresults_cutoffs %>% 
+  group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+  summarize(MEM_power = sum(MEMpexch < q5_MEM)/nsim,
+            MEMr_power = sum(MEMrpexch < q5_MEMr)/nsim,
+            pval_power = sum(pval < p_cutoff)/nsim)
+
+allresults_summary_calibrated$MEMcutoff <- MEM_cutoff
+allresults_summary_calibrated$pvalcutoff <- p_cutoff
+
+write.csv(allresults_summary_calibrated, "simulation_results_summary_calibratedcutoff.csv")
 
 
 ##########################################################
@@ -560,6 +591,29 @@ allresults_unequaln_summary_08$pvalcutoff <- p_cutoff
 
 write.csv(allresults_unequaln_summary_08, "simulation_results_unequaln_summary_08cutoff.csv")
 
+#T1E RATE CALIBRATED CUTOFF
+MEM_cutoff <- "calibrated"
+p_cutoff <- 0.05 
+nsim <- 10000
 
+allresults_unequaln$effsize <- ifelse(allresults_unequaln$num_arms == 1, 
+                                      allresults_unequaln$mean2 - allresults_unequaln$mean1, 
+                                      allresults_unequaln$trteff2 - allresults_unequaln$trteff1)
+cutoffs <- allresults_unequaln[allresults_unequaln$effsize == 0,] %>% group_by(n1, n2, outcome_type, num_arms, sd1, sd2) %>%
+  summarize(q5_MEM = quantile(MEMpexch, 0.05, na.rm = TRUE), 
+            q5_MEMr = quantile(MEMrpexch, 0.05)) %>% 
+  as.data.frame()
+allresults_unequaln_cutoffs <- merge(allresults_unequaln, cutoffs)
+
+allresults_unequaln_summary_calibrated <- allresults_unequaln_cutoffs %>% 
+  group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
+  summarize(MEM_power = sum(MEMpexch < q5_MEM)/nsim,
+            MEMr_power = sum(MEMrpexch < q5_MEMr)/nsim,
+            pval_power = sum(pval < p_cutoff)/nsim)
+
+allresults_unequaln_summary_calibrated$MEMcutoff <- MEM_cutoff
+allresults_unequaln_summary_calibrated$pvalcutoff <- p_cutoff
+
+write.csv(allresults_unequaln_summary_calibrated, "simulation_results_unequaln_summary_calibratedcutoff.csv")
 
 
