@@ -112,9 +112,9 @@ calc.weights_MEM_cont = function(xvec,svec,nvec,prior){
     
     ###Calculating the weights
     #Writing out the marginal models
-    m1 = sqrt(2*pi)^2 / sqrt(1/(v*v01))
+    m1 = sqrt(2*pi)^2 / sqrt(1/(v*v01)) #INDEPENDENT/NON-EXCHANGEABLE
     
-    m2 = sqrt(2*pi)^1 / sqrt((1/v + 1/v01)) * exp(-0.5 * ((xbar-xbar01)^2/(v + v01)) )
+    m2 = sqrt(2*pi)^1 / sqrt((1/v + 1/v01)) * exp(-0.5 * ((xbar-xbar01)^2/(v + v01)) ) #EXCHANGEABLE
     
     if(prior=='pi_e'){
       w1 <- 0.5*m1; w2 <- 0.5*m2
@@ -328,7 +328,11 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
   if((num_arms == 2) && (outcome_type == "binary")){
     #simulate data:
     #primary
-    trt <- rbinom(n[1], 1, prob = 0.5) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+    #trt <- rbinom(n[1], 1, prob = 0.5) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+    trt <- rep(0:1, each = n[1]/2) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+    if(n[1]%%2 == 1){
+      trt[n[1]] <- 1
+    }
     Y <- rbinom(n[1], 1, prob= (means[1] + trt_effect[1]*(trt))) 
     primary <- data.frame(Y, trt)
     primary$df <- 1
@@ -337,7 +341,11 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
     #secondary
     secondary <- NULL
     for(i in 2:n_sources) {
-      trt <- rbinom(n[i], 1, 0.5) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+      #trt <- rbinom(n[i], 1, 0.5) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+      trt <- rep(0:1, each = n[i]/2) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+      if(n[i]%%2 == 1){
+        trt[n[i]] <- 1
+      }
       Y <- rbinom(n[i], 1, prob= (means[i] + trt_effect[i]*(trt)))
       df <- i
       secondary <- rbind(secondary, data.frame(Y,trt,df))
@@ -372,7 +380,11 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
   if((num_arms == 2) && (outcome_type == "continuous")){
     #simulate data:
     #primary
-    trt <- rbinom(n[1], 1, 0.5)
+    #trt <- rbinom(n[1], 1, 0.5)
+    trt <- rep(0:1, each = n[1]/2) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+    if(n[1]%%2 == 1){
+      trt[n[1]] <- 1
+    }
     Y <- rnorm(n[1], mean= means[1] + trt_effect[1]*trt, sd=sds[1])
     primary <- data.frame(Y, trt)
     primary$df <- 1
@@ -381,7 +393,11 @@ SimulateData <- function(n, means, sds = NULL, trt_effect = NULL, num_arms, outc
     #secondary
     secondary <- NULL
     for(i in 2:n_sources) {
-      trt <- rbinom(n[i], 1, 0.5)
+      #trt <- rbinom(n[i], 1, 0.5)
+      trt <- rep(0:1, each = n[i]/2) #ALWAYS 1:1 TREATMENT:CONTROL SPLIT
+      if(n[i]%%2 == 1){
+        trt[n[i]] <- 1
+      }
       Y <- rnorm(n[i], mean= means[i] + trt_effect[i]*trt, sd=sds[i])
       df <- i
       secondary <- rbind(secondary, data.frame(Y,trt,df))
@@ -442,6 +458,12 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
   data$sourcefactor <- as.factor(data$df)
   
   if((num_arms == 1) && (outcome_type == "binary")){
+    
+    #get summary stats of simulated data
+    count_g1 <- sum(data$Y[data$secondary == 0])
+    count_g2 <- sum(data$Y[data$secondary == 1])
+    
+    
     #Logistic Regression Model
     lmfit <- glm(Y ~ sourcefactor, family = binomial(link = "logit"), data = data) 
     
@@ -450,10 +472,13 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
     
     standardtestpval <- standardtestresult$`Pr(>Chisq)`[2] #get p-value from LRT for flexibility in # of sources
     
+    
+    chisqpval <- tryCatch({chisq.test(matrix(c(count_g1, count_g2, n[1] - count_g1, n[2] - count_g2), ncol = 2))$p.value}, 
+                           warning = function(w){
+                             fisher.test(matrix(c(count_g1, count_g2, n[1] - count_g1, n[2] - count_g2), ncol = 2))$p.value})
+
     #MEM weights
-    #get summary stats of simulated data
-    count_g1 <- sum(data$Y[data$secondary == 0])
-    count_g2 <- sum(data$Y[data$secondary == 1])
+    #TRUE BINARY MODEL
     
     wts_MEM <- calc.weights_MEM_bin(xvec = c(count_g1, count_g2),
                                     nvec=c(sum(data$S2 == 0), sum(data$S2 == 1)), 
@@ -461,6 +486,17 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
                                     bvec = c(1,1),
                                     prior = "equal",
                                     constraint = 1)$q
+    
+    #CONTINUOUS APPROXIMATION MODEL
+    simmean_g1 <- mean(data$Y[data$secondary == 0])
+    simmean_g2 <- mean(data$Y[data$secondary == 1])
+    simsd_g1 <- sd(data$Y[data$secondary == 0])
+    simsd_g2 <- sd(data$Y[data$secondary == 1])
+    
+    wts_MEM_contapprox <- calc.weights_MEM_cont(xvec = c(simmean_g1, simmean_g2),
+                                                svec = c(simsd_g1, simsd_g2),
+                                                nvec=c(sum(data$S2 == 0), sum(data$S2 == 1)), 
+                                                prior = "pi_e")
     
     #MEMr weights
     ls <- vector("list", n_sources-1)
@@ -490,6 +526,8 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
     
     standardtestpval <- standardtestresult$`Pr(>F)`[2] #get p-value from F-test for flexibility in # of sources
     
+    chisqpval <- NA
+    
     #MEM weights
     #get summary stats of simulated data
     simmean_g1 <- mean(data$Y[data$secondary == 0])
@@ -501,6 +539,8 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
                                      svec = c(simsd_g1, simsd_g2),
                                      nvec=c(sum(data$S2 == 0), sum(data$S2 == 1)), 
                                      prior = "pi_e")
+    
+    wts_MEM_contapprox <- c(NA,NA)
     
     #MEMr weights
     ls <- vector("list", n_sources-1)
@@ -532,8 +572,40 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
     
     standardtestpval <- standardtestresult$`Pr(>Chisq)`[2] #get p-value from LRT for flexibility in # of sources
     
-    #MEM weights (NA for two arm)
-    wts_MEM <- c(NA,NA)
+    chisqpval <- NA
+    
+    #MEM weights (use normal approximation for difference in proportions)
+    count_g1placebo <- sum(data$Y[(data$secondary == 0) & (data$trt == 0)])
+    count_g1trt <- sum(data$Y[(data$secondary == 0) & (data$trt == 1)])
+    count_g2placebo <- sum(data$Y[(data$secondary == 1) & (data$trt == 0)])
+    count_g2trt <- sum(data$Y[(data$secondary == 1) & (data$trt == 1)])
+    
+    n_g1placebo <- nrow(data[(data$secondary == 0) & (data$trt == 0),])
+    n_g1trt <- nrow(data[(data$secondary == 0) & (data$trt == 1),])
+    n_g2placebo <- nrow(data[(data$secondary == 1) & (data$trt == 0),])
+    n_g2trt <- nrow(data[(data$secondary == 1) & (data$trt == 1),])
+    
+    p1placebo <- count_g1placebo/n_g1placebo
+    p1trt <- count_g1trt/n_g1trt
+    p2placebo <- count_g2placebo/n_g2placebo
+    p2trt <- count_g2trt/n_g2trt
+    
+    #se_grp1 <- sqrt((p1placebo*(1-p1placebo)/n_g1placebo) + (p1trt*(1-p1trt)/n_g1trt))
+    se_grp1 <- sqrt((p1placebo*(1-p1placebo)) + (p1trt*(1-p1trt)))
+    mean_grp1 <- p1trt - p1placebo
+    n_grp1 <- n_g1placebo + n_g1trt
+    
+    #se_grp2 <- sqrt((p2placebo*(1-p2placebo)/n_g2placebo) + (p2trt*(1-p2trt)/n_g2trt))
+    se_grp2 <- sqrt((p2placebo*(1-p2placebo)) + (p2trt*(1-p2trt)))
+    mean_grp2 <- p2trt - p2placebo
+    n_grp2 <- n_g2placebo + n_g2trt
+    
+    wts_MEM <- calc.weights_MEM_cont(xvec = c(mean_grp1,mean_grp2),
+                                     svec = c(se_grp1,se_grp2),
+                                     nvec = c(n_grp1,n_grp2),
+                                     prior = "pi_e")
+    
+    wts_MEM_contapprox <- c(NA,NA)
     
     #MEMr weights
     #first marginal MEM: only considers main effects
@@ -566,8 +638,41 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
     
     standardtestpval <- standardtestresult$`Pr(>F)`[2] #get p-value from F-test for flexibility in # of sources
     
-    #MEM weights (NA for two arm)
-    wts_MEM <- c(NA,NA)
+    chisqpval <- NA
+    
+    #MEM weights (use normal approximation for difference in means)
+    mean_g1placebo <- mean(data$Y[(data$secondary == 0) & (data$trt == 0)])
+    mean_g1trt <- mean(data$Y[(data$secondary == 0) & (data$trt == 1)])
+    mean_g2placebo <- mean(data$Y[(data$secondary == 1) & (data$trt == 0)])
+    mean_g2trt <- mean(data$Y[(data$secondary == 1) & (data$trt == 1)])
+    
+    sd_g1placebo <- sd(data$Y[(data$secondary == 0) & (data$trt == 0)])
+    sd_g1trt <- sd(data$Y[(data$secondary == 0) & (data$trt == 1)])
+    sd_g2placebo <- sd(data$Y[(data$secondary == 1) & (data$trt == 0)])
+    sd_g2trt <- sd(data$Y[(data$secondary == 1) & (data$trt == 1)])
+    
+    n_g1placebo <- nrow(data[(data$secondary == 0) & (data$trt == 0),])
+    n_g1trt <- nrow(data[(data$secondary == 0) & (data$trt == 1),])
+    n_g2placebo <- nrow(data[(data$secondary == 1) & (data$trt == 0),])
+    n_g2trt <- nrow(data[(data$secondary == 1) & (data$trt == 1),])
+    
+    #assume n_g1placebo \approx n_g1trt because of the 1:1 treatment effect 
+    #se_grp1 <- sqrt(((sd_g1placebo^2)/n_g1placebo) + ((sd_g1trt^2)/n_g1trt))
+    se_grp1 <- sqrt(((sd_g1placebo^2)) + ((sd_g1trt^2)))
+    mean_grp1 <- mean_g1trt - mean_g1placebo
+    n_grp1 <- n_g1placebo + n_g1trt
+    
+    #se_grp2 <- sqrt(((sd_g2placebo^2)/n_g2placebo) + ((sd_g2trt^2)/n_g2trt))
+    se_grp2 <- sqrt(((sd_g2placebo^2)) + ((sd_g2trt^2)))
+    mean_grp2 <- mean_g2trt - mean_g2placebo
+    n_grp2 <- n_g2placebo + n_g2trt
+    
+    wts_MEM <- calc.weights_MEM_cont(xvec = c(mean_grp1,mean_grp2),
+                                     svec = c(se_grp1,se_grp2),
+                                     nvec = c(n_grp1,n_grp2),
+                                     prior = "pi_e")
+    
+    wts_MEM_contapprox <- c(NA,NA)
     
     #MEMr weights
     #first marginal MEM: only considers main effects
@@ -625,8 +730,10 @@ RunModels <- function(data = NULL, n = NULL, means = NULL, sds = NULL, trt_effec
               trteff_g2 = trt_effect[2],
               weights_MEM = c(wts_MEM[2],wts_MEM[1]), #change MEM order because it is opposite of MEMr order
                                                       #makes first weight probability of exchangeability and second nonexchangeability
+              weight_MEM_contapprox = c(wts_MEM_contapprox[2], wts_MEM_contapprox[1]),
               weights_MEMr = wts_MEMr,                #first weight is probability of exchangeability and second is nonexchangeability
-              pval = standardtestpval))
+              pval = standardtestpval, 
+              pval_chisq = chisqpval))
   
 }
 

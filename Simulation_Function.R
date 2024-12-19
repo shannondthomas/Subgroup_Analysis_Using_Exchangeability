@@ -48,9 +48,12 @@ RunSim <- function(nsim = 10000, pars, num_arms, outcome_type, marginal = "BIC")
                      trteff2 = rep(NA, length(pars)*nsim),
                      MEMpexch = rep(NA, length(pars)*nsim), 
                      MEMpnexch = rep(NA, length(pars)*nsim),
+                     MEMapproxpexch = rep(NA, length(pars)*nsim), 
+                     MEMapproxpnexch = rep(NA, length(pars)*nsim),
                      MEMrpexch = rep(NA, length(pars)*nsim), 
                      MEMrpnexch = rep(NA, length(pars)*nsim), 
-                     pval = rep(NA, length(pars)*nsim))
+                     pval = rep(NA, length(pars)*nsim), 
+                     pval_chisq = rep(NA, length(pars)*nsim))
   
   
   pb= txtProgressBar(min = 0, max = length(pars), style = 3, char=":)")
@@ -80,19 +83,22 @@ RunSim <- function(nsim = 10000, pars, num_arms, outcome_type, marginal = "BIC")
     
     result <- as.data.frame(unlist(sim.results))
     
-    summ[(nsim*(i-1) + 1):(nsim*i),1] <- (result %>% filter(row_number() %% 13 == 1))
-    summ[(nsim*(i-1) + 1):(nsim*i),2] <- (result %>% filter(row_number() %% 13 == 2))
-    summ[(nsim*(i-1) + 1):(nsim*i),3] <- (result %>% filter(row_number() %% 13 == 3))
-    summ[(nsim*(i-1) + 1):(nsim*i),4] <- (result %>% filter(row_number() %% 13 == 4))
-    summ[(nsim*(i-1) + 1):(nsim*i),5] <- (result %>% filter(row_number() %% 13 == 5))
-    summ[(nsim*(i-1) + 1):(nsim*i),6] <- (result %>% filter(row_number() %% 13 == 6))    
-    summ[(nsim*(i-1) + 1):(nsim*i),7] <- (result %>% filter(row_number() %% 13 == 7))
-    summ[(nsim*(i-1) + 1):(nsim*i),8] <- (result %>% filter(row_number() %% 13 == 8))
-    summ[(nsim*(i-1) + 1):(nsim*i),9] <- (result %>% filter(row_number() %% 13 == 9))
-    summ[(nsim*(i-1) + 1):(nsim*i),10] <- (result %>% filter(row_number() %% 13 == 10))
-    summ[(nsim*(i-1) + 1):(nsim*i),11] <- (result %>% filter(row_number() %% 13 == 11))    
-    summ[(nsim*(i-1) + 1):(nsim*i),12] <- (result %>% filter(row_number() %% 13 == 12))
-    summ[(nsim*(i-1) + 1):(nsim*i),13] <- (result %>% filter(row_number() %% 13 == 0))
+    summ[(nsim*(i-1) + 1):(nsim*i),1] <- (result %>% filter(row_number() %% 16 == 1))
+    summ[(nsim*(i-1) + 1):(nsim*i),2] <- (result %>% filter(row_number() %% 16 == 2))
+    summ[(nsim*(i-1) + 1):(nsim*i),3] <- (result %>% filter(row_number() %% 16 == 3))
+    summ[(nsim*(i-1) + 1):(nsim*i),4] <- (result %>% filter(row_number() %% 16 == 4))
+    summ[(nsim*(i-1) + 1):(nsim*i),5] <- (result %>% filter(row_number() %% 16 == 5))
+    summ[(nsim*(i-1) + 1):(nsim*i),6] <- (result %>% filter(row_number() %% 16 == 6))    
+    summ[(nsim*(i-1) + 1):(nsim*i),7] <- (result %>% filter(row_number() %% 16 == 7))
+    summ[(nsim*(i-1) + 1):(nsim*i),8] <- (result %>% filter(row_number() %% 16 == 8))
+    summ[(nsim*(i-1) + 1):(nsim*i),9] <- (result %>% filter(row_number() %% 16 == 9))
+    summ[(nsim*(i-1) + 1):(nsim*i),10] <- (result %>% filter(row_number() %% 16 == 10))
+    summ[(nsim*(i-1) + 1):(nsim*i),11] <- (result %>% filter(row_number() %% 16 == 11))    
+    summ[(nsim*(i-1) + 1):(nsim*i),12] <- (result %>% filter(row_number() %% 16 == 12))
+    summ[(nsim*(i-1) + 1):(nsim*i),13] <- (result %>% filter(row_number() %% 16 == 13))    
+    summ[(nsim*(i-1) + 1):(nsim*i),14] <- (result %>% filter(row_number() %% 16 == 14))
+    summ[(nsim*(i-1) + 1):(nsim*i),15] <- (result %>% filter(row_number() %% 16 == 15))
+    summ[(nsim*(i-1) + 1):(nsim*i),16] <- (result %>% filter(row_number() %% 16 == 0))
     
     setTxtProgressBar(pb, i)
   }

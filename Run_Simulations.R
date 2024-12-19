@@ -47,7 +47,7 @@
 #           Section 4
 #              repeat section 2 for unequal sample sizes in groups
 #
-# NOTES: Sections 1-4 took 17 hours to run on my DELL laptop - 
+# NOTES: Sections 1-4 took about 9.5 hours to run on my DELL laptop - 
 #           Processor - Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, 2592 Mhz, 
 #                       6 Core(s), 12 Logical Processor(s)
 #           Installed RAM - 16.0 GB (15.8 GB usable)
@@ -290,7 +290,9 @@ allresults_summary <- allresults %>%
                       group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
                       summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
                                 MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
-                                pval_power = sum(pval < p_cutoff)/nsim)
+                                pval_power = sum(pval < p_cutoff)/nsim,
+                                MEM_contapprox_power = sum(MEMapproxpexch < MEM_cutoff)/nsim,
+                                pval_chisq_power = sum(pval_chisq < p_cutoff)/nsim)
 
 allresults_summary$MEMcutoff <- MEM_cutoff
 allresults_summary$pvalcutoff <- p_cutoff
@@ -305,7 +307,9 @@ allresults_summary_08 <- allresults %>%
   group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
   summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
             MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
-            pval_power = sum(pval < p_cutoff)/nsim)
+            pval_power = sum(pval < p_cutoff)/nsim,
+            MEM_contapprox_power = sum(MEMapproxpexch < MEM_cutoff)/nsim,
+            pval_chisq_power = sum(pval_chisq < p_cutoff)/nsim)
 
 allresults_summary_08$MEMcutoff <- MEM_cutoff
 allresults_summary_08$pvalcutoff <- p_cutoff
@@ -322,6 +326,7 @@ allresults$effsize <- ifelse(allresults$num_arms == 1,
                              allresults$trteff2 - allresults$trteff1)
 cutoffs <- allresults[allresults$effsize == 0,] %>% group_by(n1, n2, outcome_type, num_arms, sd1, sd2) %>%
   summarize(q5_MEM = quantile(MEMpexch, 0.05, na.rm = TRUE), 
+            q5_MEMcontapprox = quantile(MEMapproxpexch, 0.05, na.rm = TRUE),
             q5_MEMr = quantile(MEMrpexch, 0.05)) %>% 
   as.data.frame()
 allresults_cutoffs <- merge(allresults, cutoffs)
@@ -330,7 +335,9 @@ allresults_summary_calibrated <- allresults_cutoffs %>%
   group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
   summarize(MEM_power = sum(MEMpexch < q5_MEM)/nsim,
             MEMr_power = sum(MEMrpexch < q5_MEMr)/nsim,
-            pval_power = sum(pval < p_cutoff)/nsim)
+            pval_power = sum(pval < p_cutoff)/nsim,
+            MEM_contapprox_power = sum(MEMapproxpexch < q5_MEMcontapprox)/nsim,
+            pval_chisq_power = sum(pval_chisq < p_cutoff)/nsim)
 
 allresults_summary_calibrated$MEMcutoff <- MEM_cutoff
 allresults_summary_calibrated$pvalcutoff <- p_cutoff
@@ -567,9 +574,11 @@ p_cutoff <- 0.05
 nsim <- 10000
 allresults_unequaln_summary <- allresults_unequaln %>% 
   group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
-  summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+  summarize(MEM_power = sum(MEMpexch < MEM_cutoff, na.rm = TRUE)/nsim,
             MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
-            pval_power = sum(pval < p_cutoff)/nsim)
+            pval_power = sum(pval < p_cutoff)/nsim,
+            MEM_contapprox_power = sum(MEMapproxpexch < MEM_cutoff)/nsim,
+            pval_chisq_power = sum(pval_chisq < p_cutoff)/nsim)
 
 allresults_unequaln_summary$MEMcutoff <- MEM_cutoff
 allresults_unequaln_summary$pvalcutoff <- p_cutoff
@@ -582,9 +591,11 @@ p_cutoff <- 0.05
 nsim <- 10000
 allresults_unequaln_summary_08 <- allresults_unequaln %>% 
   group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
-  summarize(MEM_power = sum(MEMpexch < MEM_cutoff)/nsim,
+  summarize(MEM_power = sum(MEMpexch < MEM_cutoff, na.rm = TRUE)/nsim,
             MEMr_power = sum(MEMrpexch < MEM_cutoff)/nsim,
-            pval_power = sum(pval < p_cutoff)/nsim)
+            pval_power = sum(pval < p_cutoff)/nsim,
+            MEM_contapprox_power = sum(MEMapproxpexch < MEM_cutoff)/nsim,
+            pval_chisq_power = sum(pval_chisq < p_cutoff)/nsim)
 
 allresults_unequaln_summary_08$MEMcutoff <- MEM_cutoff
 allresults_unequaln_summary_08$pvalcutoff <- p_cutoff
@@ -601,15 +612,18 @@ allresults_unequaln$effsize <- ifelse(allresults_unequaln$num_arms == 1,
                                       allresults_unequaln$trteff2 - allresults_unequaln$trteff1)
 cutoffs <- allresults_unequaln[allresults_unequaln$effsize == 0,] %>% group_by(n1, n2, outcome_type, num_arms, sd1, sd2) %>%
   summarize(q5_MEM = quantile(MEMpexch, 0.05, na.rm = TRUE), 
+            q5_MEMcontapprox = quantile(MEMapproxpexch, 0.05, na.rm = TRUE), 
             q5_MEMr = quantile(MEMrpexch, 0.05)) %>% 
   as.data.frame()
 allresults_unequaln_cutoffs <- merge(allresults_unequaln, cutoffs)
 
 allresults_unequaln_summary_calibrated <- allresults_unequaln_cutoffs %>% 
   group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
-  summarize(MEM_power = sum(MEMpexch < q5_MEM)/nsim,
+  summarize(MEM_power = sum(MEMpexch < q5_MEM, na.rm = TRUE)/nsim,
             MEMr_power = sum(MEMrpexch < q5_MEMr)/nsim,
-            pval_power = sum(pval < p_cutoff)/nsim)
+            pval_power = sum(pval < p_cutoff)/nsim,
+            MEM_contapprox_power = sum(MEMapproxpexch < q5_MEMcontapprox)/nsim,
+            pval_chisq_power = sum(pval_chisq < p_cutoff)/nsim)
 
 allresults_unequaln_summary_calibrated$MEMcutoff <- MEM_cutoff
 allresults_unequaln_summary_calibrated$pvalcutoff <- p_cutoff
