@@ -89,10 +89,10 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
   }
   else{
     if(!is.null(higherprobs)){
-      foldername <- paste("Figures/EqualSamp/", MEM_cutoff, "Cutoff/", sep = "")
+      foldername <- paste("Figures/EqualSamp/HigherBaselineProbs/", MEM_cutoff, "Cutoff/", sep = "")
     }
     else{
-      foldername <- paste("Figures/EqualSamp/HigherBaselineProbs/", MEM_cutoff, "Cutoff/", sep = "")
+      foldername <- paste("Figures/EqualSamp/", MEM_cutoff, "Cutoff/", sep = "")
     }
   }
   
@@ -382,9 +382,9 @@ heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "continuous", ht = 20
              unequal_n = TRUE)
 
 heatmap_func(higherprobs_alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
-             higherprobs = TRUE)
+             higherprobs = "higherprobs")
 heatmap_func(higherprobs_alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
-             higherprobs = TRUE)
+             higherprobs = "higherprobs")
 
 #0.8 cutoff
 heatmap_func(alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05)
@@ -402,9 +402,9 @@ heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "binary", ht = 200
 heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              unequal_n = TRUE)
 
-heatmap_func(higherprobs_alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              higherprobs = "higherprobs")
-heatmap_func(higherprobs_alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              higherprobs = "higherprobs")
 
 
@@ -423,9 +423,9 @@ heatmap_func(alldat_cal_unequaln, num_arms = 2, outcome_type = "binary", ht = 20
 heatmap_func(alldat_cal_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              unequal_n = TRUE)
   
-heatmap_func(higherprobs_alldat_cal, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_cal, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              higherprobs = "higherprobs")
-heatmap_func(higherprobs_alldat_cal, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_cal, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              higherprobs = "higherprobs")
 
 
