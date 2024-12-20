@@ -92,15 +92,29 @@ casestudy_sim_summary <- function(nsim = 10000, num_arms, outcome_type, n_source
   
   allsimresults <- RunSim(nsim = nsim, pars = params,num_arms = num_arms, outcome_type = outcome_type)
   
+  #find calibrated cutoff
+  allsimresults$null <- ifelse(((is.na(allsimresults$trteff1) & is.na(allsimresults$trteff2) & (allsimresults$mean1 == allsimresults$mean2))) |
+                               (!is.na(allsimresults$trteff1) & (allsimresults$trteff1 == allsimresults$trteff2)), 1, 0)
+  
+  calibratedcutoffs <- allsimresults %>% subset(null == 1) %>% summarize(MEMcalibrated = quantile(MEMpexch, 0.05),
+                                                                         MEMrcalibrated = quantile(MEMrpexch, 0.05))
+  
+  
   #get summary info
+  MEMrcutoffs <- MEMcutoffs
+  MEMrcutoffs[3] <- calibratedcutoffs$MEMrcalibrated
+  MEMcutoffs[3] <- calibratedcutoffs$MEMcalibrated
+  pvalcutoffs[3] <- 0.05
+  
   for(i in 1:length(MEMcutoffs)){
     cutoffi_summary <- allsimresults %>% 
       group_by(num_arms, outcome_type, n1, n2, mean1, mean2, sd1, sd2, trteff1, trteff2) %>%
       summarize(MEM_power = sum(MEMpexch < MEMcutoffs[i])/nsim,
-                MEMr_power = sum(MEMrpexch < MEMcutoffs[i])/nsim,
+                MEMr_power = sum(MEMrpexch < MEMrcutoffs[i])/nsim,
                 pval_power = sum(pval < pvalcutoffs[i])/nsim)
     
     cutoffi_summary$MEMcutoff <- MEMcutoffs[i]
+    cutoffi_summary$MEMrcutoff <- MEMrcutoffs[i]
     cutoffi_summary$pvalcutoff <- pvalcutoffs[i]
     
     if(i == 1){
@@ -131,8 +145,7 @@ casestudy_sim_summary <- function(nsim = 10000, num_arms, outcome_type, n_source
   return(data.frame(test = c(rep("MEM",length(MEMcutoffs)),
                              rep("MEMr",length(MEMcutoffs)),
                              rep("Standard",length(MEMcutoffs))), 
-                    MEMcutoff = c(rep(MEMcutoffs,3)),
-                    pvalcutoff = c(rep(pvalcutoffs,3)),
+                    cutoff = append(append(MEMcutoffs, MEMrcutoffs), pvalcutoffs),
                     t1e = c(MEMt1e, MEMrt1e, standardtestt1e), 
                     power = c(MEMpower, MEMrpower, standardtestpower)))
 }
@@ -221,6 +234,26 @@ RunModels(num_arms = 1,
           marginal = "BIC",
           data = binarydataset(n = n, events = events, num_arms = 1))
 
+
+#create COVID data set based on Figure 5
+#TESTING FOR DIFFERENCE IN TRT EFFECT ON PROPORTION WITH EVENT GIVEN DELTA VARIANT PCR
+
+#source = delta variant or not delta 
+#trt = Tixagevimab–cilgavimab
+n <- c(344,343,341,319) #n[1] is samp size for delta variant treatment
+                        #n[2] is samp size for delta variant placebo
+                        #n[3] is samp size for not delta  treatment
+                        #n[4] is samp size for not delta  placebo
+
+events <- c(288,271,308,284)
+
+#test two-arm setting
+(events[1]/n[1] - events[2]/n[2]) - (events[3]/n[3] - events[4]/n[4])
+casestudy_sim_summary(num_arms = 2, outcome_type = "binary", n = n, events = events, MEMcutoffs = c(0.2,0.8), pvalcutoffs = c(0.05,0.05))
+RunModels(num_arms = 2,
+          outcome_type = "binary",
+          marginal = "BIC",
+          data = binarydataset(n = n, events = events, num_arms = 2))
 
 
 
