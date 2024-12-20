@@ -51,6 +51,7 @@ higherprobs_alldat_cal <- read.csv("higherbaselineprobs_simulation_results_summa
 library(tidyverse) #version 2.0.0
 library(gridExtra) #version 2.3
 library(grid)      #base package
+library(scales)    #version 1.3.0
 
 
 ###########################################################
@@ -132,9 +133,7 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
             axis.text.y=element_blank(), 
             axis.ticks.y=element_blank(),
             plot.margin = unit(c(5.5,5.5,5.5,-1),"pt")) +
-      {if((MEM_cutoff == 0.2) | (MEM_cutoff == "Calibrated"))scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))} +
-      {if(MEM_cutoff == 0.8)scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))} 
-    
+      scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))
     
     p2 <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize)) +
       {if((num_arms == 1) & (outcome_type == "binary"))geom_tile(aes(as.factor(efdiff), totsampsize, fill=round(MEMr_power - pval_chisq_power,7)))} +
@@ -155,11 +154,7 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
             legend.key.width = unit(0.3, "cm"),
             strip.text = element_blank(),
             plot.margin = unit(c(5.5,-1,5.5,5.5),"pt")) +
-      {if((outcome_type == "continuous")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.6,0,0.6))} +
-      {if((outcome_type == "binary")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
-      {if((outcome_type == "continuous")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-1,1), colors = c("green4","white", "purple4"), breaks = c(-1,0,1))} +
-      {if((outcome_type == "binary")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-0.3,0.3), colors = c("green4","white", "purple4"), breaks = c(-0.3,0,0.3))} + 
-      {if(MEM_cutoff == "Calibrated")scale_fill_gradientn(limits = c(-0.3,0.3), colors = c("green4","white", "purple4"), breaks = c(-0.3,0,0.3))}
+      scale_fill_gradientn(limits = c(-0.2,1), colors = c("green4","white", "purple4"), values = rescale(c(-0.2,0,1)), breaks = c(-0.2,1))
     
     jpeg(paste(foldername,"DiffMEMr_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,"_",higherprobs,".jpg",sep = ""), 
          height = 0.25*ht, width = 0.25*width)
@@ -193,9 +188,8 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
               axis.text.y=element_blank(), 
               axis.ticks.y=element_blank(),
               plot.margin = unit(c(5.5,5.5,5.5,-1),"pt")) +
-        {if((MEM_cutoff == 0.2)|(MEM_cutoff == "Calibrated"))scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))} + 
-        {if(MEM_cutoff == 0.8)scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))} 
-        
+        scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))
+      
       p2_MEM <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize)) +
         {if((num_arms == 1) & (outcome_type == "binary"))geom_tile(aes(as.factor(efdiff), totsampsize, fill=round(MEM_power - pval_chisq_power,7)))} + 
         {if((num_arms == 1) & (outcome_type == "binary"))geom_text(aes(as.factor(efdiff), totsampsize, label=round(MEM_power - pval_chisq_power,4)),size = 5)} + 
@@ -215,11 +209,7 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
               legend.key.width = unit(0.3, "cm"),
               strip.text = element_blank(),
               plot.margin = unit(c(5.5,-1,5.5,5.5),"pt")) +
-        {if((outcome_type == "continuous")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.6,0.6), colors = c("green4","white", "purple4"), breaks = c(-0.6,0,0.6))} +
-        {if((outcome_type == "binary")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
-        {if((outcome_type == "continuous")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-1,1), colors = c("green4","white", "purple4"), breaks = c(-1,0,1))} +
-        {if((outcome_type == "binary")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-0.3,0.3), colors = c("green4","white", "purple4"), breaks = c(-0.3,0,0.3))} +
-        {if(MEM_cutoff == "Calibrated")scale_fill_gradientn(limits = c(-0.3,0.3), colors = c("green4","white", "purple4"), breaks = c(-0.3,0,0.3))}
+        scale_fill_gradientn(limits = c(-0.2,1), colors = c("green4","white", "purple4"), values = rescale(c(-0.2,0,1)), breaks = c(-0.2,1))
       
       jpeg(paste(foldername, "DiffMEM_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,"_",higherprobs,".jpg",sep = ""), 
            height = 0.25*ht, width = 0.25*width)
@@ -253,8 +243,7 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
                   axis.text.y=element_blank(), 
                   axis.ticks.y=element_blank(),
                   plot.margin = unit(c(5.5,5.5,5.5,-1),"pt")) +
-            {if((MEM_cutoff == 0.2)|(MEM_cutoff == "Calibrated"))scale_fill_gradientn(limits = c(-0.61,0.61), colors = c("purple4","white", "green4"), breaks = c(-0.61,0,0.61))} + 
-            {if(MEM_cutoff == 0.8)scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))} 
+            scale_fill_gradientn(limits = c(-1,1), colors = c("purple4","white", "green4"), breaks = c(-1,0,1))
           
           p2_MEMcontapprox <- ggplot(subdat_summary[subdat_summary$efdiff == 0,], aes(as.factor(efdiff), totsampsize, fill=round(MEM_contapprox_power - pval_chisq_power,7))) + 
             geom_tile() + 
@@ -273,9 +262,7 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
                   legend.key.width = unit(0.3, "cm"),
                   strip.text = element_blank(),
                   plot.margin = unit(c(5.5,-1,5.5,5.5),"pt")) +
-            {if((outcome_type == "binary")&(MEM_cutoff == 0.2))scale_fill_gradientn(limits = c(-0.1,0.1), colors = c("green4","white", "purple4"), breaks = c(-0.1,0,0.1))} +
-            {if((outcome_type == "binary")&(MEM_cutoff == 0.8))scale_fill_gradientn(limits = c(-0.3,0.3), colors = c("green4","white", "purple4"), breaks = c(-0.3,0,0.3))} +
-            {if(MEM_cutoff == "Calibrated")scale_fill_gradientn(limits = c(-0.3,0.3), colors = c("green4","white", "purple4"), breaks = c(-0.3,0,0.3))}
+            scale_fill_gradientn(limits = c(-0.2,1), colors = c("green4","white", "purple4"), values = rescale(c(-0.2,0,1)), breaks = c(-0.2,1))
           
           jpeg(paste(foldername, "DiffMEMContApprox_",num_arm_c,"Arm",outcome_type_c,"_cutoff",MEM_cutoff,"_",higherprobs,".jpg",sep = ""), 
                height = 0.25*ht, width = 0.25*width)
@@ -366,66 +353,66 @@ heatmap_func <- function(dat, num_arms, outcome_type, ht, width, MEM_cutoff, p_c
 ############################################################
 
 #0.2 cutoff
-heatmap_func(alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
+heatmap_func(alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05)
 heatmap_func(alldat, num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05)
-heatmap_func(alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05)
+heatmap_func(alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05)
 heatmap_func(alldat, num_arms = 2, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05)
 
 
-heatmap_func(alldat_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(alldat_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05, 
              unequal_n = TRUE)
 heatmap_func(alldat_unequaln, num_arms = 1, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05, 
              unequal_n = TRUE)
-heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05, 
              unequal_n = TRUE)
 heatmap_func(alldat_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05, 
              unequal_n = TRUE)
 
-heatmap_func(higherprobs_alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05, 
              higherprobs = "higherprobs")
-heatmap_func(higherprobs_alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.2, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.2, p_cutoff = 0.05, 
              higherprobs = "higherprobs")
 
 #0.8 cutoff
-heatmap_func(alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05)
+heatmap_func(alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05)
 heatmap_func(alldat_08, num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05)
-heatmap_func(alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05)
+heatmap_func(alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05)
 heatmap_func(alldat_08, num_arms = 2, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05)
 
 
-heatmap_func(alldat_08_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+heatmap_func(alldat_08_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              unequal_n = TRUE)
 heatmap_func(alldat_08_unequaln, num_arms = 1, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              unequal_n = TRUE)
-heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              unequal_n = TRUE)
 heatmap_func(alldat_08_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              unequal_n = TRUE)
 
-heatmap_func(higherprobs_alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_08, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              higherprobs = "higherprobs")
-heatmap_func(higherprobs_alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = 0.8, p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_08, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = 0.8, p_cutoff = 0.05, 
              higherprobs = "higherprobs")
 
 
 #calibrated cutoff
-heatmap_func(alldat_cal, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05)
+heatmap_func(alldat_cal, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05)
 heatmap_func(alldat_cal, num_arms = 1, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05)
-heatmap_func(alldat_cal, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05)
+heatmap_func(alldat_cal, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05)
 heatmap_func(alldat_cal, num_arms = 2, outcome_type = "continuous", ht = 3000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05)
 
-heatmap_func(alldat_cal_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
+heatmap_func(alldat_cal_unequaln, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              unequal_n = TRUE)
 heatmap_func(alldat_cal_unequaln, num_arms = 1, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              unequal_n = TRUE)
-heatmap_func(alldat_cal_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
+heatmap_func(alldat_cal_unequaln, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              unequal_n = TRUE)
 heatmap_func(alldat_cal_unequaln, num_arms = 2, outcome_type = "continuous", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              unequal_n = TRUE)
   
-heatmap_func(higherprobs_alldat_cal, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_cal, num_arms = 1, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              higherprobs = "higherprobs")
-heatmap_func(higherprobs_alldat_cal, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3000, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
+heatmap_func(higherprobs_alldat_cal, num_arms = 2, outcome_type = "binary", ht = 2000, width = 3200, MEM_cutoff = "Calibrated", p_cutoff = 0.05, 
              higherprobs = "higherprobs")
 
 
