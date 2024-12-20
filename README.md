@@ -8,6 +8,8 @@ This repository contains all of the necessary code to reproduce the results from
 
 - Run_Simulations.R: This script calls RunModels() for all simulation scenarios and outputs the results. The outputs of this script, simulation_results_raw.csv and simulation_results_unequaln_raw.csv, are data sets containing one row for every randomly generated data set for every simulation scenario. They are not available on GitHub because it is too large. The summary data sets are available on GitHub and sufficient to produce all of the heatmaps. Further explanation of this script can be found in its header. 
 
+- Run_Additional_Simulations.R: This script is similar to Run_Simulations.R and runs the binary outcome settings with higher baseline probabilities (and thus higher variance).
+
 - Figures.R: This script generates and saves all of the heatmaps based on the results in simulation_results_summary.csv and simulation_results_unequaln_summary.csv. Further explanation of this script can be found in its header. 
 
 - RecommendedUse.R: This script creates the recommended use tables based on the summary data. 
