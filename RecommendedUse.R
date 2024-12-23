@@ -44,6 +44,9 @@ allresults_summary <- rbind(allresults_summary, allresults_summary_08,
                             allresults_unequaln_summary, allresults_unequaln_summary_08, 
                             allresults_unequaln_summary_calibrated) %>% subset(select = c(-X))
 
+#set default p-value power to be the chisq power in the OA binary setting
+allresults_summary$pval_power[!is.na(allresults_summary$pval_chisq_power)] <- allresults_summary$pval_chisq_power[!is.na(allresults_summary$pval_chisq_power)]
+
 #rearrange data to define confirmatory and exploratory use case settings
 
 #pull t1e data
@@ -82,21 +85,36 @@ allresults_summary_wide$MEMrexploratory <- ifelse((allresults_summary_wide$MEMr_
 #generate summary by MEMcutoff, num_arms, and outcome_type
 allresults_summary_wide$Variance <- allresults_summary_wide$sd1^2
 allresults_summary_wide$N <- allresults_summary_wide$n1 + allresults_summary_wide$n2
-allresults_summary_wide$effect_size <-ifelse(allresults_summary_wide$num_arms == 1, allresults_summary_wide$mean2 - allresults_summary_wide$mean1,
+allresults_summary_wide$effect_size <-ifelse(allresults_summary_wide$num_arms == 1, 
+                                             allresults_summary_wide$mean2 - allresults_summary_wide$mean1,
                                              allresults_summary_wide$trteff2 - allresults_summary_wide$trteff1)
 
 allresults_summary_wide$n2_mult <- allresults_summary_wide$n2/allresults_summary_wide$N
 
+
 recommendeduse_summary <- function(name, memtype, recommendeduse){
   sum1 <- allresults_summary_wide[allresults_summary_wide[[name]] == 1,] %>% 
-            group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, N) %>%
-            summarize(min_effsize = min(effect_size),
-                      max_effsize = max(effect_size))
+    group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, N, .data[[name]]) %>%
+    summarize(min_effsize = min(effect_size),
+              max_effsize = max(effect_size))
   
-  sum2 <- sum1 %>%
-            group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, min_effsize, max_effsize) %>%
-            summarize(min_N = min(N),
-                      max_N = max(N))
+  
+  testsum2 <- sum1 %>% 
+    group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, min_effsize, max_effsize) %>% 
+    arrange(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, N, min_effsize, max_effsize) %>% 
+    mutate(sampgap = ifelse((lag(N) == (N-100)), 0, 1))
+  
+  testsum2$sampgap[is.na(testsum2$sampgap)] <- 0
+  
+  testsum3 <- testsum2 %>%
+    group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, min_effsize, max_effsize) %>% 
+    arrange(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, N, min_effsize, max_effsize) %>% 
+    mutate(rangeind = 1+cumsum(sampgap == 1))
+
+  sum2 <- testsum3 %>%
+   group_by(n2_mult, MEMcutoff, num_arms, outcome_type, Variance, min_effsize, max_effsize, rangeind) %>%
+   summarize(min_N = min(N),
+             max_N = max(N))
   
   sum2 <- sum2[complete.cases(sum2 %>% subset(select = c(-Variance))),]
   
@@ -106,13 +124,17 @@ recommendeduse_summary <- function(name, memtype, recommendeduse){
   return(sum2)
 }
 
+################GETTING WEIRD RESULTS -- CHECK MONDAY################
+#have unnecessary row in 0.1 confirmatory calibrated TA binary MEMr results 
+################CHECK FOR OTHER THINGS LIKE THIS#############################################
 MEM_confirmatory <- recommendeduse_summary("MEMconfirmatory", "MEM", "Confirmatory")
-MEMr_confirmatory <- recommendeduse_summary("MEMrconfirmatory", "MEMr", "Confirmatory")
 MEM_exploratory <- recommendeduse_summary("MEMexploratory", "MEM", "Exploratory")
+MEMr_confirmatory <- recommendeduse_summary("MEMrconfirmatory", "MEMr", "Confirmatory")
 MEMr_exploratory <- recommendeduse_summary("MEMrexploratory", "MEMr", "Exploratory")
 
+
 allrecommendeduse <- rbind(MEM_confirmatory, MEMr_confirmatory, MEM_exploratory, MEMr_exploratory) %>%
-                        arrange(n2_mult, recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance) 
+                        arrange(n2_mult, recommendeduse, MEMcutoff, num_arms, outcome_type, MEMtype, Variance, min_N) 
 
 allrecommendeduse$effsize_range <- ifelse(allrecommendeduse$min_effsize != allrecommendeduse$max_effsize,
                                             paste(allrecommendeduse$min_effsize, "-", allrecommendeduse$max_effsize),
@@ -152,117 +174,142 @@ ft3 <- ft2 %>% theme_box() %>%
       merge_at(i = 5:6, j = 6) %>%
       merge_at(i = 7:10, j = 6) %>%
        merge_at(i = 8:9, j = 7) %>%
-  merge_at(i = 11:17, j = 4) %>% #0.5 n2mult, confirmatory, 0.2 cutoff, 2 arm section
-    merge_at(i = 11:12, j = 5) %>% 
-    merge_at(i = 13:17, j = 5) %>% 
-      merge_at(i = 13:17, j = 6) %>%
-        merge_at(i = 13:14, j = 7) %>%
-        merge_at(i = 15:17, j = 7) %>%
-  merge_at(i = 18:21, j = 4) %>% #0.5 n2mult, confirmatory, 0.8 cutoff, 1 arm section
+  merge_at(i = 11:18, j = 4) %>% #0.5 n2mult, confirmatory, 0.2 cutoff, 2 arm section
+    merge_at(i = 11:13, j = 5) %>% 
+      merge_at(i = 11:12, j = 6) %>%
+        merge_at(i = 11:12, j = 7) %>%
+    merge_at(i = 14:18, j = 5) %>% 
+      merge_at(i = 14:18, j = 6) %>%
+        merge_at(i = 14:15, j = 7) %>%
+        merge_at(i = 16:18, j = 7) %>%
+  merge_at(i = 19:21, j = 4) %>% #0.5 n2mult, confirmatory, 0.8 cutoff, 1 arm section
     merge_at(i = 19:21, j = 5) %>%
       merge_at(i = 19:21, j = 6) %>%
   merge_at(i = 22:25, j = 4) %>% #0.5 n2mult, confirmatory, 0.8 cutoff, 2 arm section
     merge_at(i = 23:25, j = 5) %>%
       merge_at(i = 23:25, j = 6) %>%
-  merge_at(i = 26:33, j = 4) %>% #0.5 n2mult, confirmatory, calibrated cutoff, 1 arm section
-    merge_at(i = 26:27, j = 5) %>%
-    merge_at(i = 28:33, j = 5) %>%
-      merge_at(i = 28:30, j = 6) %>%
-      merge_at(i = 31:33, j = 6) %>%
-  merge_at(i = 34:41, j = 4) %>% #0.5 n2mult, confirmatory, calibrated cutoff, 2 arm section 
-    merge_at(i = 34:35, j = 5) %>%
-    merge_at(i = 36:41, j = 5) %>%
-      merge_at(i = 36:38, j = 6) %>%
-      merge_at(i = 39:41, j = 6) %>%
-  merge_at(i = 43:45, j = 4) %>% #0.5 n2mult, exploratory, 0.2 cutoff, 2 arm section
-    merge_at(i = 43:45, j = 5) %>%
-      merge_at(i = 43:45, j = 6) %>%
-        merge_at(i = 43:45, j = 7) %>%
-  merge_at(i = 46:50, j = 4) %>% #0.5 n2mult, exploratory, 0.8 cutoff, 1 arm section
-    merge_at(i = 46:47, j = 5) %>%
-    merge_at(i = 48:50, j = 5) %>%
-      merge_at(i = 48:50, j = 6) %>%
-        merge_at(i = 49:50, j = 7) %>%
-  merge_at(i = 51:54, j = 4) %>% #0.5 n2mult, exploratory, 0.8 cutoff, 2 arm section
-    merge_at(i = 52:54, j = 5) %>%
-      merge_at(i = 52:54, j = 6) %>%
-        merge_at(i = 53:54, j = 7) %>%
-  merge_at(i = 55:58, j = 4) %>% #0.5 n2mult, exploratory, calibrated cutoff, 2 arm section
-    merge_at(i = 55:58, j = 5) %>% 
-      merge_at(i = 55:58, j = 6) %>% 
-        merge_at(i = 55:58, j = 7) %>% 
-  
-  merge_at(i = 59:64, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 1 arm section
-    merge_at(i = 59:62, j = 5) %>%
-      merge_at(i = 59:60, j = 6) %>%
-        merge_at(i = 59:60, j = 7) %>%
-      merge_at(i = 61:62, j = 6) %>%
+  merge_at(i = 26:37, j = 4) %>% #0.5 n2mult, confirmatory, calibrated cutoff, 1 arm section
+    merge_at(i = 26:37, j = 5) %>%
+      merge_at(i = 26:31, j = 6) %>%
+        merge_at(i = 26:27, j = 7) %>%
+        merge_at(i = 28:29, j = 7) %>%
+        merge_at(i = 30:31, j = 7) %>%
+      merge_at(i = 32:37, j = 6) %>%
+        merge_at(i = 32:33, j = 7) %>%
+        merge_at(i = 34:35, j = 7) %>%
+        merge_at(i = 36:37, j = 7) %>%
+  merge_at(i = 38:53, j = 4) %>% #0.5 n2mult, confirmatory, calibrated cutoff, 2 arm section 
+    merge_at(i = 38:41, j = 5) %>%
+      merge_at(i = 38:39, j = 6) %>%
+        merge_at(i = 38:39, j = 7) %>%
+      merge_at(i = 40:41, j = 6) %>%
+        merge_at(i = 40:41, j = 7) %>%
+    merge_at(i = 42:53, j = 5) %>%
+      merge_at(i = 42:47, j = 6) %>%
+        merge_at(i = 42:43, j = 7) %>%
+        merge_at(i = 44:45, j = 7) %>%
+        merge_at(i = 46:47, j = 7) %>%
+      merge_at(i = 48:53, j = 6) %>%
+        merge_at(i = 48:49, j = 7) %>%
+        merge_at(i = 50:51, j = 7) %>%
+        merge_at(i = 52:53, j = 7) %>%
+  merge_at(i = 55:57, j = 4) %>% #0.5 n2mult, exploratory, 0.2 cutoff, 2 arm section
+    merge_at(i = 55:57, j = 5) %>%
+      merge_at(i = 55:57, j = 6) %>%
+        merge_at(i = 55:57, j = 7) %>%
+  merge_at(i = 58:62, j = 4) %>% #0.5 n2mult, exploratory, 0.8 cutoff, 1 arm section
+    merge_at(i = 58:59, j = 5) %>%
+    merge_at(i = 60:62, j = 5) %>%
+      merge_at(i = 60:62, j = 6) %>%
         merge_at(i = 61:62, j = 7) %>%
-    merge_at(i = 63:64, j = 5) %>%
-      merge_at(i = 63:64, j = 6) %>%
-        merge_at(i = 63:64, j = 7) %>%
-  merge_at(i = 65:66, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 2 arm section
-    merge_at(i = 65:66, j = 5) %>%
-      merge_at(i = 65:66, j = 6) %>%
+  merge_at(i = 63:66, j = 4) %>% #0.5 n2mult, exploratory, 0.8 cutoff, 2 arm section
+    merge_at(i = 64:66, j = 5) %>%
+      merge_at(i = 64:66, j = 6) %>%
         merge_at(i = 65:66, j = 7) %>%
-  merge_at(i = 67:68, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 1 arm section
-  merge_at(i = 69:70, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 2 arm section
-  merge_at(i = 71:74, j = 4) %>% #0.25 n2mult, confirmatory, calibrated cutoff, 1 arm section
-    merge_at(i = 71:72, j = 5) %>%
-    merge_at(i = 73:74, j = 5) %>%
-      merge_at(i = 73:74, j = 6) %>%
-        merge_at(i = 73:74, j = 7) %>%
-  merge_at(i = 75:79, j = 4) %>% #0.25 n2mult, confirmatory, calibrated cutoff, 2 arm section
-    merge_at(i = 75:77, j = 5) %>%
+  merge_at(i = 68:71, j = 4) %>% #0.5 n2mult, exploratory, calibrated cutoff, 2 arm section
+    merge_at(i = 68:71, j = 5) %>% 
+      merge_at(i = 68:71, j = 6) %>% 
+        merge_at(i = 68:71, j = 7) %>% 
+  
+  merge_at(i = 72:77, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 1 arm section
+    merge_at(i = 72:75, j = 5) %>%
+      merge_at(i = 72:73, j = 6) %>%
+        merge_at(i = 72:73, j = 7) %>%
+      merge_at(i = 74:75, j = 6) %>%
+        merge_at(i = 74:75, j = 7) %>%
+    merge_at(i = 76:77, j = 5) %>%
       merge_at(i = 76:77, j = 6) %>%
         merge_at(i = 76:77, j = 7) %>%
+  merge_at(i = 78:79, j = 4) %>% #0.25 n2mult, confirmatory, 0.2 cutoff, 2 arm section
     merge_at(i = 78:79, j = 5) %>%
-  merge_at(i = 81:84, j = 4) %>% #0.25 n2mult, exploratory, 0.2 cutoff, 2 arm section
-    merge_at(i = 81:84, j = 5) %>%
-      merge_at(i = 81:84, j = 6) %>%
-        merge_at(i = 81:84, j = 7) %>%
-  merge_at(i = 85:87, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 1 arm section
-    merge_at(i = 85:86, j = 5) %>%
-  merge_at(i = 88:89, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 2 arm section
-  merge_at(i = 90:93, j = 4) %>% #0.25 n2mult, exploratory, calibrated cutoff, 2 arm section
+      merge_at(i = 78:79, j = 6) %>%
+        merge_at(i = 78:79, j = 7) %>%
+  merge_at(i = 81:82, j = 4) %>% #0.25 n2mult, confirmatory, 0.8 cutoff, 2 arm section
+  merge_at(i = 83:86, j = 4) %>% #0.25 n2mult, confirmatory, calibrated cutoff, 1 arm section
+    merge_at(i = 83:86, j = 5) %>%
+      merge_at(i = 83:84, j = 6) %>%
+        merge_at(i = 83:84, j = 7) %>%
+      merge_at(i = 85:86, j = 6) %>%
+        merge_at(i = 85:86, j = 7) %>%
+  merge_at(i = 87:93, j = 4) %>% #0.25 n2mult, confirmatory, calibrated cutoff, 2 arm section
+    merge_at(i = 87:89, j = 5) %>%
+      merge_at(i = 88:89, j = 6) %>%
+        merge_at(i = 88:89, j = 7) %>%
     merge_at(i = 90:93, j = 5) %>%
-      merge_at(i = 90:93, j = 6) %>%
-        merge_at(i = 90:93, j = 7) %>%
+      merge_at(i = 90:91, j = 6) %>%
+        merge_at(i = 90:91, j = 7) %>%
+      merge_at(i = 92:93, j = 6) %>%
+        merge_at(i = 92:93, j = 7) %>%
+  merge_at(i = 95:98, j = 4) %>% #0.25 n2mult, exploratory, 0.2 cutoff, 2 arm section
+    merge_at(i = 95:98, j = 5) %>%
+      merge_at(i = 95:98, j = 6) %>%
+        merge_at(i = 95:98, j = 7) %>%
+  merge_at(i = 99:101, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 1 arm section
+    merge_at(i = 99:100, j = 5) %>%
+  merge_at(i = 102:103, j = 4) %>% #0.25 n2mult, exploratory, 0.8 cutoff, 2 arm section
+  merge_at(i = 105:108, j = 4) %>% #0.25 n2mult, exploratory, calibrated cutoff, 2 arm section
+    merge_at(i = 105:108, j = 5) %>%
+      merge_at(i = 105:108, j = 6) %>%
+        merge_at(i = 105:108, j = 7) %>%
   
-  merge_at(i = 94:102, j = 4) %>% #0.1 n2mult, confirmatory, 0.2 cutoff, 1 arm section
-    merge_at(i = 94:99, j = 5) %>%
-      merge_at(i = 94:96, j = 6) %>%
-        merge_at(i = 94:96, j = 7) %>%
-      merge_at(i = 97:99, j = 6) %>%
-        merge_at(i = 97:99, j = 7) %>%
-    merge_at(i = 100:102, j = 5) %>%
-      merge_at(i = 100:102, j = 6) %>%
-        merge_at(i = 100:102, j = 7) %>%
-  merge_at(i = 104:105, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 1 arm section
-  merge_at(i = 106:107, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 2 arm section
-  merge_at(i = 108:112, j = 4) %>% #0.1 n2mult, confirmatory, calibrated cutoff, 1 arm section
-    merge_at(i = 108:110, j = 5) %>%
-      merge_at(i = 109:110, j = 6) %>%
-        merge_at(i = 109:110, j = 7) %>%
-    merge_at(i = 111:112, j = 5) %>%
-  merge_at(i = 113:117, j = 4) %>% #0.1 n2mult, confirmatory, calibrated cutoff, 2 arm section
-    merge_at(i = 113:115, j = 5) %>%
-      merge_at(i = 114:115, j = 6) %>%
-        merge_at(i = 114:115, j = 7) %>%
-    merge_at(i = 116:117, j = 5) %>%
-  merge_at(i = 119:121, j = 4) %>% #0.1 n2mult, exploratory, 0.2 cutoff, 2 arm section
-    merge_at(i = 119:121, j = 5) %>%
-      merge_at(i = 119:121, j = 6) %>%
-        merge_at(i = 119:121, j = 7) %>%
-  merge_at(i = 122:123, j = 4) %>% #0.1 n2mult, exploratory, 0.8 cutoff, 1 arm section
-  merge_at(i = 124:126, j = 4) %>% #0.1 n2mult, exploratory, 0.8 cutoff, 2 arm section
-    merge_at(i = 125:126, j = 5) %>%
-      merge_at(i = 125:126, j = 6) %>%
-        merge_at(i = 125:126, j = 7) %>%
-  merge_at(i = 127:130, j = 4) %>% #0.1 n2mult, exploratory, calibrated cutoff, 2 arm section
-    merge_at(i = 127:130, j = 5) %>%
-      merge_at(i = 127:130, j = 6) %>%
-        merge_at(i = 127:130, j = 7) 
+  merge_at(i = 109:117, j = 4) %>% #0.1 n2mult, confirmatory, 0.2 cutoff, 1 arm section
+    merge_at(i = 109:114, j = 5) %>%
+      merge_at(i = 109:111, j = 6) %>%
+        merge_at(i = 109:111, j = 7) %>%
+      merge_at(i = 112:114, j = 6) %>%
+        merge_at(i = 112:114, j = 7) %>%
+    merge_at(i = 115:117, j = 5) %>%
+      merge_at(i = 115:117, j = 6) %>%
+        merge_at(i = 115:117, j = 7) %>%
+  merge_at(i = 120:121, j = 4) %>% #0.1 n2mult, confirmatory, 0.8 cutoff, 2 arm section
+  merge_at(i = 122:125, j = 4) %>% #0.1 n2mult, confirmatory, calibrated cutoff, 1 arm section
+    merge_at(i = 122:125, j = 5) %>%
+      merge_at(i = 122:123, j = 6) %>%
+        merge_at(i = 122:123, j = 7) %>%
+      merge_at(i = 124:125, j = 6) %>%
+        merge_at(i = 124:125, j = 7) %>%
+  merge_at(i = 126:137, j = 4) %>% #0.1 n2mult, confirmatory, calibrated cutoff, 2 arm section
+    merge_at(i = 126:129, j = 5) %>%
+      merge_at(i = 127:129, j = 6) %>%
+        merge_at(i = 127:129, j = 7) %>%
+    merge_at(i = 130:137, j = 5) %>%
+      merge_at(i = 130:133, j = 6) %>%
+        merge_at(i = 130:133, j = 7) %>%
+      merge_at(i = 134:137, j = 6) %>%
+        merge_at(i = 134:137, j = 7) %>%
+  merge_at(i = 139:142, j = 4) %>% #0.1 n2mult, exploratory, 0.2 cutoff, 2 arm section
+    merge_at(i = 139:142, j = 5) %>%
+      merge_at(i = 139:142, j = 6) %>%
+        merge_at(i = 139:142, j = 7) %>%
+  merge_at(i = 143:144, j = 4) %>% #0.1 n2mult, exploratory, 0.8 cutoff, 1 arm section
+  merge_at(i = 145:147, j = 4) %>% #0.1 n2mult, exploratory, 0.8 cutoff, 2 arm section
+    merge_at(i = 146:147, j = 5) %>%
+      merge_at(i = 146:147, j = 6) %>%
+        merge_at(i = 146:147, j = 7) %>%
+  merge_at(i = 148:151, j = 4) %>% #0.1 n2mult, exploratory, calibrated cutoff, 2 arm section
+    merge_at(i = 148:151, j = 5) %>%
+      merge_at(i = 148:151, j = 6) %>%
+        merge_at(i = 148:151, j = 7) 
   
 ft3 %>% save_as_docx(path = "RecommendedUse_Master.docx")
 
