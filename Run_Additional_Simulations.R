@@ -118,7 +118,7 @@ allresults <- rbind(OABin_55, OABin_56, OABin_57, OABin_58, OABin_59,
                     TABin_11, TABin_12, TABin_13, TABin_14, TABin_15)
 
 
-write.csv(allresults, "higherbaselineprobs_simulation_results_raw.csv")
+write.csv(allresults, "simulationdata/higherbaselineprobs_simulation_results_raw.csv")
 
 #create summary data set using the following cutoffs
 #PRIMARY CUTOFF = 0.2
@@ -136,7 +136,7 @@ allresults_summary <- allresults %>%
 allresults_summary$MEMcutoff <- MEM_cutoff
 allresults_summary$pvalcutoff <- p_cutoff
 
-write.csv(allresults_summary, "higherbaselineprobs_simulation_results_summary.csv")
+write.csv(allresults_summary, "simulationdata/higherbaselineprobs_simulation_results_summary.csv")
 
 #ALTERNATE CUTOFF = 0.8
 MEM_cutoff <- 0.8
@@ -153,7 +153,7 @@ allresults_summary_08 <- allresults %>%
 allresults_summary_08$MEMcutoff <- MEM_cutoff
 allresults_summary_08$pvalcutoff <- p_cutoff
 
-write.csv(allresults_summary_08, "higherbaselineprobs_simulation_results_summary_08cutoff.csv")
+write.csv(allresults_summary_08, "simulationdata/higherbaselineprobs_simulation_results_summary_08cutoff.csv")
 
 #T1E RATE CALIBRATED CUTOFF
 MEM_cutoff <- "calibrated"
@@ -181,7 +181,7 @@ allresults_summary_calibrated <- allresults_cutoffs %>%
 allresults_summary_calibrated$MEMcutoff <- MEM_cutoff
 allresults_summary_calibrated$pvalcutoff <- p_cutoff
 
-write.csv(allresults_summary_calibrated, "higherbaselineprobs_simulation_results_summary_calibratedcutoff.csv")
+write.csv(allresults_summary_calibrated, "simulationdata/higherbaselineprobs_simulation_results_summary_calibratedcutoff.csv")
 
 
 

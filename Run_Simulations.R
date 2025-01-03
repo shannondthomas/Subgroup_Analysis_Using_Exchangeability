@@ -278,7 +278,7 @@ allresults <- rbind(OABin_11, OABin_12, OABin_13, OABin_14, OABin_15,
                     TACont_var100_11, TACont_var100_12, TACont_var100_13, TACont_var100_14, TACont_var100_15)
 
 
-write.csv(allresults, "simulation_results_raw.csv")
+write.csv(allresults, "simulationdata/simulation_results_raw.csv")
 #allresults <- read.csv("simulation_results_raw.csv")
 
 #create summary data set using the following cutoffs
@@ -297,7 +297,7 @@ allresults_summary <- allresults %>%
 allresults_summary$MEMcutoff <- MEM_cutoff
 allresults_summary$pvalcutoff <- p_cutoff
 
-write.csv(allresults_summary, "simulation_results_summary.csv")
+write.csv(allresults_summary, "simulationdata/simulation_results_summary.csv")
 
 #ALTERNATE CUTOFF = 0.8
 MEM_cutoff <- 0.8
@@ -314,7 +314,7 @@ allresults_summary_08 <- allresults %>%
 allresults_summary_08$MEMcutoff <- MEM_cutoff
 allresults_summary_08$pvalcutoff <- p_cutoff
 
-write.csv(allresults_summary_08, "simulation_results_summary_08cutoff.csv")
+write.csv(allresults_summary_08, "simulationdata/simulation_results_summary_08cutoff.csv")
 
 #T1E RATE CALIBRATED CUTOFF
 MEM_cutoff <- "calibrated"
@@ -342,7 +342,7 @@ allresults_summary_calibrated <- allresults_cutoffs %>%
 allresults_summary_calibrated$MEMcutoff <- MEM_cutoff
 allresults_summary_calibrated$pvalcutoff <- p_cutoff
 
-write.csv(allresults_summary_calibrated, "simulation_results_summary_calibratedcutoff.csv")
+write.csv(allresults_summary_calibrated, "simulationdata/simulation_results_summary_calibratedcutoff.csv")
 
 
 ##########################################################
@@ -564,7 +564,7 @@ allresults_unequaln <- rbind(OABin_11_n201, OABin_12_n201, OABin_13_n201, OABin_
                     TACont_var10_11_n2025, TACont_var10_12_n2025, TACont_var10_13_n2025, TACont_var10_14_n2025, TACont_var10_15_n2025)
 
 
-write.csv(allresults_unequaln, "simulation_results_unequaln_raw.csv")
+write.csv(allresults_unequaln, "simulationdata/simulation_results_unequaln_raw.csv")
 #allresults_unequaln <- read.csv("simulation_results_unequaln_raw.csv")
 
 #create summary data set using the following cutoffs
@@ -583,7 +583,7 @@ allresults_unequaln_summary <- allresults_unequaln %>%
 allresults_unequaln_summary$MEMcutoff <- MEM_cutoff
 allresults_unequaln_summary$pvalcutoff <- p_cutoff
 
-write.csv(allresults_unequaln_summary, "simulation_results_unequaln_summary.csv")
+write.csv(allresults_unequaln_summary, "simulationdata/simulation_results_unequaln_summary.csv")
 
 #ALTERNATE CUTOFF = 0.8
 MEM_cutoff <- 0.8
@@ -600,7 +600,7 @@ allresults_unequaln_summary_08 <- allresults_unequaln %>%
 allresults_unequaln_summary_08$MEMcutoff <- MEM_cutoff
 allresults_unequaln_summary_08$pvalcutoff <- p_cutoff
 
-write.csv(allresults_unequaln_summary_08, "simulation_results_unequaln_summary_08cutoff.csv")
+write.csv(allresults_unequaln_summary_08, "simulationdata/simulation_results_unequaln_summary_08cutoff.csv")
 
 #T1E RATE CALIBRATED CUTOFF
 MEM_cutoff <- "calibrated"
@@ -628,6 +628,6 @@ allresults_unequaln_summary_calibrated <- allresults_unequaln_cutoffs %>%
 allresults_unequaln_summary_calibrated$MEMcutoff <- MEM_cutoff
 allresults_unequaln_summary_calibrated$pvalcutoff <- p_cutoff
 
-write.csv(allresults_unequaln_summary_calibrated, "simulation_results_unequaln_summary_calibratedcutoff.csv")
+write.csv(allresults_unequaln_summary_calibrated, "simulationdata/simulation_results_unequaln_summary_calibratedcutoff.csv")
 
 
